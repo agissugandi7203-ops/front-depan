@@ -13,6 +13,7 @@ export interface UserProfile {
   tanggal_lahir: string
   nomor_telepon: string
   role: 'user' | 'petugas' | 'admin' | 'superadmin'
+  avatar_url?: string
 }
 
 interface AuthState {
@@ -22,7 +23,7 @@ interface AuthState {
   isLoading: boolean
   error: string | null
   login: (email: string, password: string) => Promise<UserProfile>
-  register: (data: Omit<UserProfile, 'id' | 'role'> & { password: string }) => Promise<void>
+  register: (data: Omit<UserProfile, 'id' | 'role' | 'avatar_url'> & { password: string }) => Promise<void>
   logout: () => Promise<void>
   checkMe: () => Promise<UserProfile | null>
   clearError: () => void
@@ -46,14 +47,25 @@ export const useAuthStore = create<AuthState>((set) => ({
       localStorage.setItem('komunitas_access_token', session.access_token)
       localStorage.setItem('komunitas_refresh_token', session.refresh_token)
 
+      // Fetch avatar_url from Supabase Auth user metadata
+      let avatar_url = ''
+      try {
+        const { data: { user: supabaseUser } } = await supabase.auth.getUser()
+        avatar_url = supabaseUser?.user_metadata?.avatar_url || ''
+      } catch (e) {
+        console.warn('Failed to fetch user metadata from Supabase:', e)
+      }
+
+      const updatedUser = { ...user, avatar_url }
+
       set({
-        user,
+        user: updatedUser,
         token: session.access_token,
         isAuthenticated: true,
         isLoading: false,
       })
 
-      return user
+      return updatedUser
     } catch (err: any) {
       const errMsg = err.response?.data?.message || err.message || 'Gagal masuk. Silakan periksa kembali kredensial Anda.'
       set({ error: errMsg, isLoading: false })
@@ -108,12 +120,24 @@ export const useAuthStore = create<AuthState>((set) => ({
         }
       })
       const { user } = response.data
+
+      // Fetch avatar_url from Supabase Auth user metadata
+      let avatar_url = ''
+      try {
+        const { data: { user: supabaseUser } } = await supabase.auth.getUser()
+        avatar_url = supabaseUser?.user_metadata?.avatar_url || ''
+      } catch (e) {
+        console.warn('Failed to fetch user metadata from Supabase:', e)
+      }
+
+      const updatedUser = { ...user, avatar_url }
+
       set({
-        user,
+        user: updatedUser,
         isAuthenticated: true,
         isLoading: false,
       })
-      return user
+      return updatedUser
     } catch (err) {
       console.warn('Token expired or invalid. Clearing session.', err)
       localStorage.removeItem('komunitas_access_token')

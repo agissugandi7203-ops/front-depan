@@ -9,17 +9,10 @@ import { cn } from '@/lib/utils'
 
 interface NavbarProps {
   /** Which nav item to highlight as active */
-  activeItem?: 'Beranda' | 'Semua Aduan' | 'Tentang'
+  activeItem?: 'Beranda' | 'Semua Aduan' | 'Profil' | 'Tentang'
   /** Custom CTA click handler — defaults to navigating to /chat */
   onCtaClick?: () => void
 }
-
-// Navigation item definitions — data-driven, route-based
-const NAV_ITEMS = [
-  { label: 'Beranda',     route: '/',           protected: false },
-  { label: 'Semua Aduan', route: '/all-reports', protected: true  },
-  { label: 'Tentang',     route: '/about',      protected: false },
-] as const
 
 export function Navbar({ activeItem, onCtaClick }: NavbarProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -28,6 +21,14 @@ export function Navbar({ activeItem, onCtaClick }: NavbarProps) {
   const { logout, isAuthenticated } = useAuthStore()
   const { openModal } = useAuthModalStore()
   const { toast } = useToast()
+
+  // Navigation item definitions — dynamically calculated based on auth status
+  const navItems = [
+    { label: 'Beranda',     route: '/',           protected: false },
+    { label: 'Semua Aduan', route: '/all-reports', protected: true  },
+    ...(isAuthenticated ? [{ label: 'Profil', route: '/profile', protected: true }] : []),
+    { label: 'Tentang',     route: '/about',      protected: false },
+  ]
 
   // Track window scroll to toggle between transparent wide layout and floating pill layout
   useEffect(() => {
@@ -44,7 +45,7 @@ export function Navbar({ activeItem, onCtaClick }: NavbarProps) {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
-  const handleNavClick = (item: typeof NAV_ITEMS[number]) => {
+  const handleNavClick = (item: { label: string; route: string; protected: boolean }) => {
     setMobileMenuOpen(false)
     if (item.protected && !isAuthenticated) {
       openModal('login')
@@ -85,15 +86,15 @@ export function Navbar({ activeItem, onCtaClick }: NavbarProps) {
           {/* Logo */}
           <div
             onClick={() => navigate('/')}
-            className="flex items-center gap-2.5 group select-none cursor-pointer"
+            className="flex items-center gap-2.5 group select-none cursor-pointer shrink-0"
           >
             <img src="/assets/logo/komunitas.png" alt="KOMUNITAS Logo" className="h-7 w-7 object-contain rounded-md transition-opacity group-hover:opacity-85" />
             <span className="font-semibold text-[15px] tracking-[-0.02em] text-zinc-100">KOMUNITAS</span>
           </div>
 
-          {/* Desktop Nav — centered inside the wrapper */}
-          <nav className="absolute left-1/2 -translate-x-1/2 hidden md:flex items-center gap-7">
-            {NAV_ITEMS.map((item) => (
+          {/* Desktop Nav — flows naturally without absolute centering */}
+          <nav className="hidden md:flex items-center gap-7">
+            {navItems.map((item) => (
               <button
                 key={item.label}
                 className={cn(
@@ -108,7 +109,7 @@ export function Navbar({ activeItem, onCtaClick }: NavbarProps) {
                 {activeItem === item.label && (
                   <motion.span
                     layoutId="activeNavLine"
-                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-500 rounded-full"
+                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#DEDBC8] rounded-full"
                     transition={{ type: "spring", stiffness: 380, damping: 30 }}
                   />
                 )}
@@ -116,23 +117,15 @@ export function Navbar({ activeItem, onCtaClick }: NavbarProps) {
             ))}
           </nav>
 
-          {/* Desktop Right Actions (No username or role display) */}
-          <div className="hidden md:flex items-center gap-3">
+          {/* Desktop Right Actions (Masuk/Keluar dynamically toggled) */}
+          <div className="hidden md:flex items-center gap-3 shrink-0">
             {isAuthenticated ? (
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => navigate('/profile')}
-                  className="h-8 px-4 text-[11px] font-bold rounded-full tracking-wide border bg-zinc-900 hover:bg-zinc-800 text-zinc-200 border-zinc-800 transition-all duration-300 active:scale-[0.97] cursor-pointer"
-                >
-                  Profil
-                </button>
-                <button
-                  onClick={handleLogout}
-                  className="h-8 px-4 text-[11px] font-bold rounded-full tracking-wide border bg-zinc-950 hover:bg-zinc-900 text-zinc-400 hover:text-rose-400 border-zinc-850 hover:border-rose-950/40 transition-all duration-300 active:scale-[0.97] cursor-pointer"
-                >
-                  Keluar
-                </button>
-              </div>
+              <button
+                onClick={handleLogout}
+                className="h-8 px-4 text-[11px] font-bold rounded-full tracking-wide border bg-zinc-950 hover:bg-zinc-900 text-zinc-400 hover:text-rose-400 border-zinc-850 hover:border-rose-950/40 transition-all duration-300 active:scale-[0.97] cursor-pointer"
+              >
+                Keluar
+              </button>
             ) : (
               <button
                 onClick={() => openModal('login')}
@@ -175,7 +168,7 @@ export function Navbar({ activeItem, onCtaClick }: NavbarProps) {
             )}
           >
             <div className="flex flex-col space-y-3">
-              {NAV_ITEMS.map((item) => (
+              {navItems.map((item) => (
                 <button
                   key={item.label}
                   className={cn(
@@ -193,20 +186,12 @@ export function Navbar({ activeItem, onCtaClick }: NavbarProps) {
 
             <div className="flex flex-col gap-2.5">
               {isAuthenticated ? (
-                <>
-                  <button
-                    onClick={() => { setMobileMenuOpen(false); navigate('/profile') }}
-                    className="w-full h-9 border border-zinc-800 hover:bg-zinc-900 text-zinc-200 font-medium rounded-lg text-sm transition-colors cursor-pointer"
-                  >
-                    Profil Saya
-                  </button>
-                  <button
-                    onClick={handleLogout}
-                    className="w-full h-9 border border-zinc-800 text-rose-400 font-medium rounded-lg text-sm transition-colors cursor-pointer hover:bg-zinc-900"
-                  >
-                    Keluar
-                  </button>
-                </>
+                <button
+                  onClick={handleLogout}
+                  className="w-full h-9 border border-zinc-800 text-rose-400 font-medium rounded-lg text-sm transition-colors cursor-pointer hover:bg-zinc-900"
+                >
+                  Keluar
+                </button>
               ) : (
                 <button
                   onClick={() => { setMobileMenuOpen(false); openModal('login') }}
