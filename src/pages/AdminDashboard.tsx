@@ -51,25 +51,34 @@ const CATEGORY_LABELS: Record<string, string> = {
   lainnya:    'Lainnya',
 }
 
-// ─── Stat Card ───────────────────────────────────────────────────────────────
-function StatCard({ icon: Icon, label, value, sub, colorClass }: {
-  icon: React.ElementType; label: string; value: number | string; sub?: string; colorClass: string
+// ─── Stat Card (Rigid Monochromatic Bento Design) ───────────────────────────
+function StatCard({ icon: Icon, label, value, sub }: {
+  icon: React.ElementType; label: string; value: number | string; sub?: string
 }) {
   return (
     <motion.div
       variants={fadeUp}
-      className="relative overflow-hidden rounded-lg border border-zinc-800 bg-zinc-900 p-5 hover:border-zinc-700 transition duration-200"
+      className="group relative overflow-hidden rounded-md border border-zinc-900 bg-[#101010] p-5 transition duration-300 hover:border-zinc-800 hover:bg-[#121212] select-none"
     >
-      <div className="flex items-start justify-between">
-        <div className={cn('flex h-9 w-9 items-center justify-center rounded-lg bg-zinc-950 border border-zinc-800', colorClass)}>
-          <Icon className="h-4.5 w-4.5" />
-        </div>
-        <TrendingUp className="h-4 w-4 text-zinc-500" />
+      {/* Precision accent bar on hover */}
+      <div className="absolute top-0 left-0 w-[2px] h-0 bg-[#DEDBC8] group-hover:h-3 transition-all duration-300" />
+      
+      <div className="flex items-center justify-between">
+        <span className="text-[9px] font-mono font-bold text-zinc-500 group-hover:text-zinc-400 uppercase tracking-[0.16em] transition-colors duration-300">
+          {label}
+        </span>
+        <Icon className="h-4 w-4 text-zinc-550 text-zinc-500 group-hover:text-[#DEDBC8] transition-colors duration-300 shrink-0" />
       </div>
-      <div className="mt-4">
-        <div className="text-2xl font-bold tracking-tight text-zinc-100">{value}</div>
-        <div className="mt-0.5 text-xs font-semibold text-zinc-400 uppercase tracking-wider text-[9px]">{label}</div>
-        {sub && <div className="mt-1 text-[10px] text-zinc-500 font-normal leading-normal">{sub}</div>}
+      
+      <div className="mt-3.5 space-y-0.5">
+        <div className="text-3xl font-mono font-bold tracking-tight text-zinc-100">
+          {value}
+        </div>
+        {sub && (
+          <div className="text-[10px] text-zinc-500 font-normal tracking-tight font-sans leading-normal">
+            {sub}
+          </div>
+        )}
       </div>
     </motion.div>
   )

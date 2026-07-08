@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion'
 import {
   Bot, Shield, FileText, Users,
   ArrowRight, Loader2, Sparkles,
@@ -469,6 +469,18 @@ export function HomePage() {
 
   const verdict = getVerdict(claimResult)
 
+  // Parallax scroll setup for Hero text elements
+  const heroRef = useRef<HTMLDivElement>(null)
+  const { scrollYProgress: heroProgress } = useScroll({
+    target: heroRef,
+    offset: ["start start", "end end"]
+  })
+
+  // Text vertical offsets based on scroll progress
+  const titleY = useTransform(heroProgress, [0, 1], [0, -110])
+  const subtitleY = useTransform(heroProgress, [0, 1], [0, -70])
+  const ctaY = useTransform(heroProgress, [0, 1], [0, -40])
+
   return (
     <div className="min-h-screen bg-dot-pattern text-zinc-100 flex flex-col relative overflow-x-hidden">
       {/* ── Ambient radial glow — does not distract ── */}
@@ -483,8 +495,8 @@ export function HomePage() {
       {/* ══ MAIN ═════════════════════════════════════════════════════════════ */}
       <main className="relative z-10 flex-1">
 
-        {/* ── HERO — Fullscreen video background, bottom-left content ─── */}
-        <section className="relative min-h-[92vh] overflow-hidden bg-[#080808]">
+        {/* ── HERO — Fullscreen video background, asymmetrical text with parallax scroll ─── */}
+        <section ref={heroRef} className="relative min-h-[92vh] overflow-hidden bg-[#080808]">
 
           {/* Background Video — preload=none so it doesn't block FCP */}
           <video
@@ -498,53 +510,47 @@ export function HomePage() {
           />
 
           {/* Elegant movie-like dark overlay for high readability */}
-          <div className="absolute inset-0 bg-black/60 pointer-events-none" />
+          <div className="absolute inset-0 bg-black/65 pointer-events-none" />
 
-          {/* Hero content — centered, philosophical copy, elegant minimalism */}
-          <div className="relative z-10 flex flex-col min-h-[92vh]">
-            <div className="flex-1 flex items-center justify-center text-center px-6 sm:px-12 md:px-20 lg:px-28">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-                className="max-w-3xl mx-auto flex flex-col items-center"
-              >
-                {/* Badge */}
-                <a
-                  href="#tools-section"
-                  onClick={(e) => {
-                    e.preventDefault()
-                    document.getElementById('tools-section')?.scrollIntoView({ behavior: 'smooth' })
-                  }}
-                  className="inline-flex items-center gap-1.5 text-[12px] font-medium text-zinc-400 hover:text-zinc-200 transition-colors mb-5 group uppercase tracking-wider"
-                >
-                  Portal Informasi & Validasi Berita
-                  <span className="inline-block transition-transform duration-200 group-hover:translate-x-0.5">→</span>
-                </a>
-
-                 {/* Headline */}
-                <h1 className="text-[2.5rem] sm:text-[3.5rem] md:text-[4rem] leading-[1.1] font-semibold text-white tracking-tight mb-6 max-w-3xl">
-                  Menemukan <span className="font-lora italic font-normal text-zinc-300">Kebenaran</span> di Tengah Riuh Informasi
+          {/* Hero content — studio-style bold, left-aligned grid */}
+          <div className="relative z-10 flex flex-col min-h-[92vh] justify-end pb-16 md:pb-24">
+            <div className="max-w-5xl w-full mx-auto px-6 sm:px-12 md:px-16 flex flex-col items-start text-left">
+              
+              {/* Headline with Parallax */}
+              <motion.div style={{ y: titleY }} className="w-full">
+                <span className="text-[10px] font-bold tracking-[0.2em] font-mono text-[#DEDBC8] uppercase block mb-5">
+                  PORTAL INFORMASI & VALIDASI ADUAN
+                </span>
+                <h1 className="text-[2.6rem] sm:text-[4.5rem] lg:text-[5.5rem] leading-[0.9] font-black text-white tracking-[-0.03em] uppercase">
+                  MENYUARAKAN <br />
+                  <span className="font-serif italic font-normal text-[#DEDBC8] lowercase tracking-normal">aspirasi warga,</span> <br />
+                  MENYINGKAP FAKTA.
                 </h1>
-
-                {/* Subtext */}
-                <p className="text-[15px] sm:text-[17px] text-zinc-300 font-normal max-w-md mb-8 leading-relaxed">
-                  Platform kolaboratif berbasis AI untuk memvalidasi fakta secara cepat dan transparan.
-                </p>
-
-                {/* CTA */}
-                <a
-                  href="#"
-                  onClick={(e) => {
-                    e.preventDefault()
-                    handleStartChat()
-                  }}
-                  className="inline-flex items-center gap-2.5 text-[14px] font-medium text-white bg-indigo-650 hover:bg-indigo-600 border border-indigo-550/20 rounded-full px-7 py-3 transition-all duration-200 shadow-md group active:scale-[0.97]"
-                >
-                  Mulai Konsultasi AI
-                  <span className="transition-transform duration-200 group-hover:translate-x-0.5">→</span>
-                </a>
               </motion.div>
+
+              {/* Asymmetric Bottom Grid (Subtitle & CTA Button) */}
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-end mt-10 md:mt-14 w-full">
+                
+                {/* Description Subtext with Parallax */}
+                <motion.div style={{ y: subtitleY }} className="md:col-span-7">
+                  <p className="text-[13.5px] md:text-[14.5px] text-zinc-400 font-light leading-relaxed max-w-sm">
+                    Platform kolaboratif berbasis AI warga terintegrasi. Membantu Anda menelusuri birokrasi, melakukan cek fakta berita secara instan, dan memetakan aduan sarana publik secara real-time.
+                  </p>
+                </motion.div>
+
+                {/* CTA Button with Parallax */}
+                <motion.div style={{ y: ctaY }} className="md:col-span-5 flex justify-start md:justify-end">
+                  <button
+                    onClick={handleStartChat}
+                    className="group flex items-center gap-2 bg-[#DEDBC8] hover:bg-white text-zinc-950 text-[12.5px] font-bold px-6 py-3.5 rounded-full transition-all active:scale-[0.98] shadow-2xl cursor-pointer"
+                  >
+                    Mulai Konsultasi AI
+                    <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
+                  </button>
+                </motion.div>
+
+              </div>
+
             </div>
           </div>
         </section>
