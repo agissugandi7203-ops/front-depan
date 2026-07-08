@@ -67,6 +67,12 @@ export default defineConfig({
           'vendor-forms': ['react-hook-form', '@hookform/resolvers', 'zod'],
           // HTTP
           'vendor-http': ['axios'],
+          // Markdown rendering — react-markdown ecosystem
+          'vendor-markdown': [
+            'react-markdown',
+            'remark-gfm',
+            'rehype-highlight',
+          ],
         },
         // Clean filenames
         chunkFileNames: 'assets/js/[name]-[hash].js',
@@ -99,6 +105,8 @@ export default defineConfig({
       'lucide-react',
       'lenis',
       'gsap',
+      'react-markdown',
+      'remark-gfm',
     ],
     // Exclude mermaid from pre-bundling (too large — lazy loaded anyway)
     exclude: ['mermaid'],
