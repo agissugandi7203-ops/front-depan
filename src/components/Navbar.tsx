@@ -74,13 +74,13 @@ export function Navbar({ activeItem, onCtaClick }: NavbarProps) {
       {/* Outer fixed header — covers 100% viewport width, acts as a layout container without shifting */}
       <header className="fixed top-0 left-0 right-0 z-50 w-full flex items-center justify-center pointer-events-none h-[88px] bg-transparent border-none">
         
-        {/* Inner dynamic wrapper — shrinks/expands dynamically centered via flex-justify-center */}
+        {/* Inner dynamic wrapper — stays full width, only toggling background and bottom border on scroll */}
         <div
           className={cn(
-            "flex items-center justify-between pointer-events-auto transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]",
+            "flex items-center justify-between pointer-events-auto transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] w-full max-w-full h-[68px] px-6 md:px-10 mt-0",
             isScrolled
-              ? "w-[calc(100%-2rem)] max-w-5xl h-[54px] px-6 md:px-8 rounded-full border border-zinc-800/80 bg-zinc-950/80 backdrop-blur-xl shadow-[0_20px_45px_rgba(0,0,0,0.65)] mt-4"
-              : "w-full max-w-full h-[68px] px-6 md:px-10 border-b border-transparent bg-transparent mt-0"
+              ? "border-b border-zinc-900 bg-zinc-950/80 backdrop-blur-xl shadow-lg"
+              : "border-b border-transparent bg-transparent"
           )}
         >
           {/* Logo */}
