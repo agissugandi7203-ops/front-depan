@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils'
 
 interface NavbarProps {
   /** Which nav item to highlight as active */
-  activeItem?: 'Beranda' | 'Asisten AI' | 'Semua Aduan' | 'Tentang'
+  activeItem?: 'Beranda' | 'Semua Aduan' | 'Tentang'
   /** Custom CTA click handler — defaults to navigating to /chat */
   onCtaClick?: () => void
 }
@@ -17,7 +17,6 @@ interface NavbarProps {
 // Navigation item definitions — data-driven, route-based
 const NAV_ITEMS = [
   { label: 'Beranda',     route: '/',           protected: false },
-  { label: 'Asisten AI',  route: '/chat',       protected: false },
   { label: 'Semua Aduan', route: '/all-reports', protected: true  },
   { label: 'Tentang',     route: '/about',      protected: false },
 ] as const
