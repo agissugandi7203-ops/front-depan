@@ -345,3 +345,57 @@ select option {
   0%, 100% { opacity: 1; }
   50% { opacity: 0; }
 }
+
+/* ─────────────────────────────────────────────────
+   PERFORMANCE OPTIMIZATIONS
+   ───────────────────────────────────────────────── */
+
+/* Respect prefers-reduced-motion — disable ALL animations/transitions for users who request it */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* GPU compositing hint for animated elements — browser promotes to own layer */
+.navbar-fixed,
+[data-framer-component-type] {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* content-visibility: auto — browser skips rendering off-screen sections entirely
+   This is the #1 CSS trick for long pages on mobile */
+section {
+  content-visibility: auto;
+  contain-intrinsic-size: 0 500px; /* estimated height placeholder to prevent layout shift */
+}
+
+/* Prevent browser from doing hit-test work on decorative blobs/glows */
+.pointer-events-none {
+  contain: strict;
+}
+
+/* Reduce paint area for scrollable containers */
+.overflow-x-auto,
+.overflow-y-auto,
+.overflow-auto {
+  -webkit-overflow-scrolling: touch; /* momentum scroll on iOS */
+  overscroll-behavior: contain;      /* prevent scroll chaining to parent */
+}
+
+/* Optimize image rendering on high-DPI mobile screens */
+img {
+  image-rendering: auto;
+  max-width: 100%;
+  height: auto;
+}
+
+/* Video: prevent GPU layer thrash on mobile */
+video {
+  transform: translateZ(0);
+  will-change: auto;
+}

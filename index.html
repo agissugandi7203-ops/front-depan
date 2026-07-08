@@ -2,11 +2,11 @@
 <html lang="id" class="dark">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 
     <!-- Primary Meta Tags -->
-    <title>KOMUNITAS — Portal Informasi Faktual, Cek Fakta & Layanan Aduan Publik</title>
-    <meta name="title" content="KOMUNITAS — Portal Informasi Faktual, Cek Fakta & Layanan Aduan Publik" />
+    <title>KOMUNITAS — Portal Informasi Faktual, Cek Fakta &amp; Layanan Aduan Publik</title>
+    <meta name="title" content="KOMUNITAS — Portal Informasi Faktual, Cek Fakta &amp; Layanan Aduan Publik" />
     <meta name="description" content="KOMUNITAS membantu warga Indonesia mengakses informasi pelayanan publik yang akurat, memverifikasi berita hoaks (RAG AI), meringkas berkas birokrasi, dan melaporkan aduan wilayah terintegrasi Live GIS." />
     <meta name="theme-color" content="#080808" />
     <meta name="robots" content="index, follow" />
@@ -15,7 +15,7 @@
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://komunitasai.web.id/" />
-    <meta property="og:title" content="KOMUNITAS — Portal Informasi Faktual & Layanan Aduan Publik" />
+    <meta property="og:title" content="KOMUNITAS — Portal Informasi Faktual &amp; Layanan Aduan Publik" />
     <meta property="og:description" content="Validasi informasi, RAG asisten pelayanan publik, OCR vision, dan pelaporan GIS interaktif 2 arah untuk seluruh warga Indonesia." />
     <meta property="og:image" content="https://komunitasai.web.id/assets/og-image.png" />
     <meta property="og:locale" content="id_ID" />
@@ -23,24 +23,40 @@
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image" />
     <meta property="twitter:url" content="https://komunitasai.web.id/" />
-    <meta property="twitter:title" content="KOMUNITAS — Portal Informasi Faktual & Layanan Aduan Publik" />
+    <meta property="twitter:title" content="KOMUNITAS — Portal Informasi Faktual &amp; Layanan Aduan Publik" />
     <meta property="twitter:description" content="Validasi informasi, RAG asisten pelayanan publik, OCR vision, dan pelaporan GIS interaktif 2 arah untuk seluruh warga Indonesia." />
     <meta property="twitter:image" content="https://komunitasai.web.id/assets/og-image.png" />
 
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="/assets/logo/komunitas.png" />
 
-    <!-- DNS prefetch for external resources -->
-    <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
-    <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
-
-    <!-- Google Fonts — preconnect + non-blocking load -->
+    <!-- === PERFORMANCE: Preconnect & DNS prefetch for critical external origins === -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <!-- display=swap: text immediately visible in fallback font, swap to custom when loaded -->
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Lora:ital,wght@0,400;0,600;1,400;1,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+    <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
+    <!-- Backend API origins — prefetch DNS to reduce TTFB on first API call -->
+    <link rel="dns-prefetch" href="https://backbelakang-12178843429.asia-southeast1.run.app" />
+    <link rel="dns-prefetch" href="https://qaenpoqkwixilczeqwyv.supabase.co" />
 
-    <!-- JSON-LD Structured Data for WebApplication -->
+    <!-- === PERFORMANCE: Google Fonts — only load weights actually used, display=swap prevents FOIT === -->
+    <!-- Load only essential subsets: latin (not all languages) to reduce font file size -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Lora:ital,wght@1,400&family=Inter:wght@400;500&display=swap&subset=latin"
+      rel="stylesheet"
+      media="print"
+      onload="this.media='all'"
+    />
+    <!-- Noscript fallback for font loading -->
+    <noscript>
+      <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Lora:ital,wght@1,400&family=Inter:wght@400;500&display=swap&subset=latin" rel="stylesheet" />
+    </noscript>
+
+    <!-- === PERFORMANCE: Preload LCP (Largest Contentful Paint) critical assets === -->
+    <!-- Logo shown in PageLoader & Navbar — preload so it renders on first frame -->
+    <link rel="preload" href="/assets/logo/komunitas.png" as="image" type="image/png" />
+
+    <!-- JSON-LD Structured Data -->
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
@@ -63,6 +79,5 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
-    <!-- Trigger deploy after setup -->
   </body>
 </html>

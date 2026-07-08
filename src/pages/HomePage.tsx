@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, lazy, Suspense } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion'
 import {
@@ -16,8 +16,12 @@ import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/store/authStore'
 import { useAuthModalStore } from '@/store/authModalStore'
 import Footer4Col from '@/components/ui/footer-column'
-import { MermaidDiagram } from '@/components/MermaidDiagram'
 import { Navbar } from '@/components/Navbar'
+
+// MermaidDiagram lazy-loaded — Mermaid library is ~2MB, only load when needed
+const MermaidDiagram = lazy(() =>
+  import('@/components/MermaidDiagram').then(m => ({ default: m.MermaidDiagram }))
+)
 
 // ─── Shared animation presets ────────────────────────────────────────────────
 const fadeUp = {
@@ -135,7 +139,11 @@ const renderSummaryContent = (text: string) => {
     // Handle code block closing
     if (trimmed === '```' && inCodeBlock) {
       if (inMermaidBlock && mermaidLines.length > 0) {
-        elements.push(<MermaidDiagram key={`mermaid-${idx}`} chart={mermaidLines.join('\n')} />)
+        elements.push(
+          <Suspense key={`mermaid-${idx}`} fallback={<div className="my-4 h-16 rounded-xl bg-zinc-900/80 border border-purple-900/30 animate-pulse" />}>
+            <MermaidDiagram chart={mermaidLines.join('\n')} />
+          </Suspense>
+        )
       }
       inCodeBlock = false
       inMermaidBlock = false
@@ -236,8 +244,6 @@ export function HomePage() {
   const [claimResult, setClaimResult]   = useState<any>(null)
   const [docLoading, setDocLoading]     = useState(false)
   const [docResult, setDocResult]       = useState<any>(null)
-  const [isScrolled, setIsScrolled] = useState(false)
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   // For Claim Verifier Image
   const [claimImage, setClaimImage] = useState<{ base64: string; mimeType: string; name: string } | null>(null)
@@ -254,22 +260,14 @@ export function HomePage() {
   const navigate = useNavigate()
   const { toast } = useToast()
 
-  const { isAuthenticated, user, logout, checkMe } = useAuthStore()
+  const { isAuthenticated, user, checkMe } = useAuthStore()
   const { openModal } = useAuthModalStore()
 
   useEffect(() => {
     if (isAuthenticated && !user) {
-      checkMe().catch(err => console.error('Sesi gagal dimuat:', err))
+      checkMe().catch(() => {})
     }
   }, [isAuthenticated, user, checkMe])
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20)
-    }
-    window.addEventListener('scroll', handleScroll, { passive: true })
-    return () => window.removeEventListener('scroll', handleScroll)
-  }, [])
 
   const handleStartChat = useCallback(() => {
     const id = createSession(undefined, user?.id)

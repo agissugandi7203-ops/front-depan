@@ -1,14 +1,18 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
+import { compression } from 'vite-plugin-compression2'
 
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
     react({
-      // Use automatic JSX transform — no need for React import in every file
       jsxRuntime: 'automatic',
     }),
+    // Brotli compression (smaller than gzip, supported by modern browsers + CDN)
+    compression({ algorithm: 'brotliCompress', exclude: [/\.(png|jpg|jpeg|gif|webp|avif|mp4|webm)$/] }),
+    // Gzip as fallback for older servers/proxies
+    compression({ algorithm: 'gzip', exclude: [/\.(png|jpg|jpeg|gif|webp|avif|mp4|webm)$/] }),
   ],
   resolve: {
     alias: {
@@ -28,53 +32,79 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: false,
-    // Reduce chunk warning threshold
     chunkSizeWarningLimit: 800,
     cssMinify: true,
-    // esbuild is faster and robust — keep for production
-    minify: 'esbuild',
+    // Terser: more aggressive dead-code elimination & minification than esbuild
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: true,        // Strip all console.log in production
+        drop_debugger: true,
+        pure_funcs: ['console.log', 'console.info', 'console.debug', 'console.warn'],
+        passes: 2,                 // Two compression passes for smaller output
+        ecma: 2020,
+        unsafe_arrows: true,
+        unsafe_methods: true,
+      },
+      mangle: {
+        safari10: false,
+      },
+      format: {
+        comments: false,           // Strip all comments
+      },
+    },
     // Target modern browsers to reduce polyfill overhead
     target: ['es2020', 'chrome87', 'firefox78', 'safari14'],
     rollupOptions: {
       output: {
         // Manual chunk splitting for optimal caching & parallel loading
-        manualChunks: {
-          // Core React runtime — rarely changes
-          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
-          // Framer Motion — large, isolated so it doesn't bloat the main bundle
-          'vendor-motion': ['framer-motion'],
+        manualChunks(id) {
+          // Core React runtime — rarely changes, isolated for long-term caching
+          if (id.includes('node_modules/react/') || id.includes('node_modules/react-dom/') || id.includes('node_modules/react-router-dom/')) {
+            return 'vendor-react'
+          }
+          // Framer Motion — large, isolated
+          if (id.includes('node_modules/framer-motion/') || id.includes('node_modules/motion/')) {
+            return 'vendor-motion'
+          }
           // Mermaid is very large (~2MB) — defer it completely
-          'vendor-mermaid': ['mermaid'],
+          if (id.includes('node_modules/mermaid/') || id.includes('node_modules/d3') || id.includes('node_modules/dagre')) {
+            return 'vendor-mermaid'
+          }
           // Supabase client
-          'vendor-supabase': ['@supabase/supabase-js'],
+          if (id.includes('node_modules/@supabase/')) {
+            return 'vendor-supabase'
+          }
           // Radix UI primitives
-          'vendor-radix': [
-            '@radix-ui/react-avatar',
-            '@radix-ui/react-dialog',
-            '@radix-ui/react-icons',
-            '@radix-ui/react-label',
-            '@radix-ui/react-scroll-area',
-            '@radix-ui/react-slot',
-            '@radix-ui/react-toast',
-          ],
+          if (id.includes('node_modules/@radix-ui/')) {
+            return 'vendor-radix'
+          }
           // State management
-          'vendor-state': ['zustand', '@tanstack/react-query'],
-          // Scroll & animation utilities (lighter)
-          'vendor-scroll': ['lenis', 'gsap'],
+          if (id.includes('node_modules/zustand/') || id.includes('node_modules/@tanstack/')) {
+            return 'vendor-state'
+          }
           // Lucide icons — tree-shaken but still sizeable
-          'vendor-icons': ['lucide-react'],
+          if (id.includes('node_modules/lucide-react/')) {
+            return 'vendor-icons'
+          }
           // Form utilities
-          'vendor-forms': ['react-hook-form', '@hookform/resolvers', 'zod'],
+          if (id.includes('node_modules/react-hook-form/') || id.includes('node_modules/@hookform/') || id.includes('node_modules/zod/')) {
+            return 'vendor-forms'
+          }
           // HTTP
-          'vendor-http': ['axios'],
-          // Markdown rendering — react-markdown ecosystem
-          'vendor-markdown': [
-            'react-markdown',
-            'remark-gfm',
-            'rehype-highlight',
-          ],
+          if (id.includes('node_modules/axios/')) {
+            return 'vendor-http'
+          }
+          // Markdown rendering
+          if (id.includes('node_modules/react-markdown/') || id.includes('node_modules/remark') || id.includes('node_modules/rehype')) {
+            return 'vendor-markdown'
+          }
+          // Lenis + GSAP smooth scroll — loaded in App, isolated
+          if (id.includes('node_modules/lenis/') || id.includes('node_modules/gsap/')) {
+            return 'vendor-scroll'
+          }
         },
-        // Clean filenames
+        // Clean, cache-friendly filenames
         chunkFileNames: 'assets/js/[name]-[hash].js',
         entryFileNames: 'assets/js/[name]-[hash].js',
         assetFileNames: (assetInfo) => {
@@ -91,7 +121,11 @@ export default defineConfig({
           return 'assets/[name]-[hash][extname]'
         },
       },
-      // Externalize nothing — keep everything bundled for SPA
+      // Treeshaking: remove unused exports aggressively
+      treeshake: {
+        preset: 'recommended',
+        moduleSideEffects: false,
+      },
     },
   },
   // Optimize deps pre-bundling
@@ -103,12 +137,11 @@ export default defineConfig({
       'framer-motion',
       'zustand',
       'lucide-react',
-      'lenis',
-      'gsap',
+      'axios',
       'react-markdown',
       'remark-gfm',
     ],
-    // Exclude mermaid from pre-bundling (too large — lazy loaded anyway)
-    exclude: ['mermaid'],
+    // Exclude mermaid & heavy scroll libs from pre-bundling (lazy loaded)
+    exclude: ['mermaid', 'lenis', 'gsap'],
   },
 })

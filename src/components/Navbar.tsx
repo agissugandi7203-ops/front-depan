@@ -69,11 +69,12 @@ export function Navbar({ activeItem, onCtaClick }: NavbarProps) {
       {/* ── Fixed header — flush to top, no gap, full width ── */}
       <header
         className={cn(
-          'fixed top-0 left-0 right-0 z-50 w-full transition-all duration-300',
+          'fixed top-0 left-0 right-0 z-50 w-full transition-[background-color,border-color,box-shadow] duration-300',
           isScrolled
             ? 'bg-zinc-950/85 backdrop-blur-xl border-b border-zinc-900 shadow-lg'
             : 'bg-transparent border-b border-transparent'
         )}
+        style={isScrolled ? { willChange: 'transform' } : undefined}
       >
         <div className="flex items-center justify-between h-16 px-5 md:px-10">
 
