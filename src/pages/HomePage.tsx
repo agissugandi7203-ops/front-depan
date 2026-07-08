@@ -514,13 +514,13 @@ export function HomePage() {
 
           {/* Hero content — studio-style bold, left-aligned grid */}
           <div className="relative z-10 flex flex-col min-h-[92vh] justify-end pb-16 md:pb-24">
-            <div className="max-w-5xl w-full mx-auto px-6 sm:px-12 md:px-16 flex flex-col items-start justify-end text-left h-full">
+            <div className="max-w-5xl w-full mx-auto px-6 sm:px-12 md:px-16 flex flex-col items-end justify-end text-right h-full">
               
-              {/* Title, Subtitle, and CTA Stacked on the Bottom Left */}
-              <div className="max-w-xl flex flex-col items-start gap-4">
+              {/* Title, Subtitle, and CTA Stacked on the Bottom Right */}
+              <div className="max-w-xl flex flex-col items-end gap-4">
                 
                 {/* Headline with Parallax */}
-                <motion.div style={{ y: titleY }} className="space-y-2">
+                <motion.div style={{ y: titleY }} className="space-y-2 text-right">
                   <span className="text-[9px] font-bold tracking-[0.2em] font-mono text-[#DEDBC8] uppercase block">
                     PORTAL INFORMASI & VALIDASI ADUAN
                   </span>
@@ -532,8 +532,8 @@ export function HomePage() {
                 </motion.div>
 
                 {/* Subtitle with Parallax */}
-                <motion.div style={{ y: subtitleY }}>
-                  <p className="text-[12.5px] text-zinc-400 font-light leading-relaxed max-w-sm">
+                <motion.div style={{ y: subtitleY }} className="text-right">
+                  <p className="text-[12.5px] text-zinc-400 font-light leading-relaxed max-w-sm ml-auto">
                     Platform kolaboratif berbasis AI warga terintegrasi. Membantu Anda menelusuri birokrasi, melakukan cek fakta berita secara instan, dan memetakan aduan sarana publik secara real-time.
                   </p>
                 </motion.div>
