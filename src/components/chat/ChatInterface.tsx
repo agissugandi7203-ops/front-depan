@@ -22,7 +22,8 @@ const SUGGESTED = [
   { icon: Activity, text: 'Kontak darurat ambulans PMI di daerah saya',          label: 'Kesehatan Darurat' },
 ]
 
-const API_BASE = `http://${typeof window !== 'undefined' ? window.location.hostname : 'localhost'}:3000`
+import { API_BASE_URL as API_BASE, getWsUrl } from '@/lib/apiConfig'
+
 
 export function ChatInterface() {
   const { 
@@ -98,8 +99,7 @@ export function ChatInterface() {
       wsRef.current.onclose = null
       wsRef.current.close()
     }
-    const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws'
-    const wsUrl = `${protocol}://${window.location.hostname}:3000/api/ws/chat?reportId=${reportId}&userId=${user?.id || 'citizen'}&role=user&name=${encodeURIComponent(user?.nama_lengkap || 'Warga')}`
+    const wsUrl = getWsUrl(`/api/ws/chat?reportId=${reportId}&userId=${user?.id || 'citizen'}&role=user&name=${encodeURIComponent(user?.nama_lengkap || 'Warga')}`)
     const ws = new WebSocket(wsUrl)
     wsRef.current = ws
 

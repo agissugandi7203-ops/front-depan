@@ -2,8 +2,8 @@ import { create } from 'zustand'
 import axios from 'axios'
 import { supabase } from '@/services/auth'
 
-const host = typeof window !== 'undefined' ? window.location.hostname : 'localhost'
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || `http://${host}:3000`
+import { API_BASE_URL } from '@/lib/apiConfig'
+
 
 export interface UserProfile {
   id: string

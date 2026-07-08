@@ -27,6 +27,8 @@ import { authService } from '@/services/auth'
 import { useAuthStore } from '@/store/authStore'
 import { ReportMap } from '@/components/admin/ReportMap'
 import { cn } from '@/lib/utils'
+import { getWsUrl } from '@/lib/apiConfig'
+
 import { ChatWidget } from '@/components/chat/ChatWidget'
 
 // ─── Animation presets ──────────────────────────────────────────────────────
@@ -2045,8 +2047,7 @@ export function AdminDashboard() {
         ws.close()
       }
 
-      const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws'
-      const wsUrl = `${protocol}://${window.location.hostname}:3000/api/ws/admin`
+      const wsUrl = getWsUrl('/api/ws/admin')
 
       console.log('🔌 Connecting to Admin WebSocket:', wsUrl)
       ws = new WebSocket(wsUrl)

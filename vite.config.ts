@@ -26,29 +26,7 @@ export default defineConfig({
     chunkSizeWarningLimit: 1000,
     cssMinify: true,
     minify: 'esbuild', // standard Vite minifier, fast and robust
-    rollupOptions: {
-      output: {
-        manualChunks(id) {
-          if (id.includes('node_modules')) {
-            if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) {
-              return 'vendor-react';
-            }
-            if (id.includes('leaflet') || id.includes('react-leaflet')) {
-              return 'vendor-leaflet';
-            }
-            if (id.includes('framer-motion')) {
-              return 'vendor-framer';
-            }
-            if (id.includes('@radix-ui')) {
-              return 'vendor-radix';
-            }
-            if (id.includes('lucide-react')) {
-              return 'vendor-lucide';
-            }
-            return 'vendor-others';
-          }
-        }
-      }
-    }
+    // Let Vite manage chunking automatically to avoid circular dependencies
+    rollupOptions: {}
   }
 })

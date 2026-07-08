@@ -8,7 +8,9 @@ import {
 import { adminService } from '@/services/api'
 import { useAuthStore } from '@/store/authStore'
 import { useToast } from '@/components/ui/toast'
+import { getWsUrl } from '@/lib/apiConfig'
 import { cn } from '@/lib/utils'
+
 
 interface Report {
   id: string
@@ -180,8 +182,7 @@ export function AllReports() {
         ws.close()
       }
 
-      const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws'
-      const wsUrl = `${protocol}://${window.location.hostname}:3000/api/ws/admin`
+      const wsUrl = getWsUrl('/api/ws/admin')
 
       console.log('🔌 Connecting reports observer WebSocket:', wsUrl)
       ws = new WebSocket(wsUrl)

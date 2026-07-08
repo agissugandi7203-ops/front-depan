@@ -10,8 +10,8 @@ import { supabase } from '@/services/auth'
 import { cn } from '@/lib/utils'
 import axios from 'axios'
 
-const host = typeof window !== 'undefined' ? window.location.hostname : 'localhost'
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || `http://${host}:3000`
+import { API_BASE_URL } from '@/lib/apiConfig'
+
 
 const ROLE_LABELS: Record<string, { label: string; color: string; bg: string }> = {
   superadmin: { label: 'Super Admin', color: 'text-rose-400', bg: 'bg-rose-500/10 border-rose-500/20' },
