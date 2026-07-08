@@ -1696,6 +1696,22 @@ function ChatTranscriptModal({ session, onClose }: { session: ChatHistorySession
 export function AdminDashboard() {
   const navigate = useNavigate()
   const { user, logout } = useAuthStore()
+
+  const navItemsAll = [
+    { id: 'overview',    label: 'Ringkasan',        icon: LayoutDashboard,  desc: 'Monitoring Overview',     roles: ['petugas','admin','superadmin'] },
+    { id: 'reports',     label: 'Laporan Warga',    icon: FileText,          desc: 'Citizen Reports',         roles: ['petugas','admin','superadmin'] },
+    { id: 'percakapan',  label: 'Percakapan Aktif', icon: MessageSquare,     desc: 'Live Active Chats',       roles: ['petugas','admin','superadmin'] },
+    { id: 'services',    label: 'Direktori RAG',    icon: BookOpen,          desc: 'RAG Knowledge Directory', roles: ['admin','superadmin'] },
+    { id: 'claims',      label: 'Cek Fakta',        icon: Shield,            desc: 'Fact Check & Claims',     roles: ['admin','superadmin'] },
+    { id: 'summaries',   label: 'Ringkasan Dok',    icon: FileSpreadsheet,   desc: 'Regulation Summaries',    roles: ['superadmin'] },
+    { id: 'histories',   label: 'Riwayat Chat',     icon: MessageSquare,     desc: 'Chat History Logs',       roles: ['superadmin'] },
+    { id: 'staff',       label: 'Kelola Staf',      icon: Users,             desc: 'Staff Management',        roles: ['superadmin'] },
+    { id: 'hoaks',       label: 'Database Hoaks',   icon: AlertTriangle,     desc: 'WhatsApp Hoax DB',        roles: ['superadmin'] },
+  ] as const
+
+  const navItems = navItemsAll.filter(item =>
+    (item.roles as readonly string[]).includes(user?.role || '')
+  )
   
   // ─── Active Tab ───────────────────────────────────────────────────────────
   const [activeTab, setActiveTab] = useState<'overview' | 'reports' | 'services' | 'claims' | 'summaries' | 'histories' | 'percakapan' | 'staff' | 'hoaks'>('overview')
@@ -1813,7 +1829,7 @@ export function AdminDashboard() {
       setStats(data)
 
       // Fetch geographic data from all reports dynamically
-      const res = await adminService.getReports(undefined, 1, 1000)
+      const res = await adminService.getReports(undefined, 1, 100000)
       const list = res.reports || []
       setAllReports(list)
 
@@ -2129,6 +2145,15 @@ export function AdminDashboard() {
     }
     checkAuthStatus()
   }, [navigate])
+
+  useEffect(() => {
+    if (user) {
+      const allowedTabIds = navItems.map(item => item.id)
+      if (!allowedTabIds.includes(activeTab as any)) {
+        setActiveTab('overview')
+      }
+    }
+  }, [activeTab, user, navItems])
 
   useEffect(() => {
     setLoading(true)
@@ -2452,21 +2477,7 @@ export function AdminDashboard() {
     { icon: FileSpreadsheet, label: 'Ringkasan (AI)',  value: stats.totalSummaries || 0,         colorClass: 'text-teal-400',   sub: 'Dokumen regulasi diringkas' },
   ] : []
 
-  const navItemsAll = [
-    { id: 'overview',    label: 'Ringkasan',        icon: LayoutDashboard,  desc: 'Monitoring Overview',     roles: ['petugas','admin','superadmin'] },
-    { id: 'reports',     label: 'Laporan Warga',    icon: FileText,          desc: 'Citizen Reports',         roles: ['petugas','admin','superadmin'] },
-    { id: 'percakapan',  label: 'Percakapan Aktif', icon: MessageSquare,     desc: 'Live Active Chats',       roles: ['petugas','admin','superadmin'] },
-    { id: 'services',    label: 'Direktori RAG',    icon: BookOpen,          desc: 'RAG Knowledge Directory', roles: ['admin','superadmin'] },
-    { id: 'claims',      label: 'Cek Fakta',        icon: Shield,            desc: 'Fact Check & Claims',     roles: ['admin','superadmin'] },
-    { id: 'summaries',   label: 'Ringkasan Dok',    icon: FileSpreadsheet,   desc: 'Regulation Summaries',    roles: ['superadmin'] },
-    { id: 'histories',   label: 'Riwayat Chat',     icon: MessageSquare,     desc: 'Chat History Logs',       roles: ['superadmin'] },
-    { id: 'staff',       label: 'Kelola Staf',      icon: Users,             desc: 'Staff Management',        roles: ['superadmin'] },
-    { id: 'hoaks',       label: 'Database Hoaks',   icon: AlertTriangle,     desc: 'WhatsApp Hoax DB',        roles: ['superadmin'] },
-  ] as const
 
-  const navItems = navItemsAll.filter(item =>
-    (item.roles as readonly string[]).includes(user?.role || '')
-  )
 
   return (
     <div className="flex min-h-screen bg-zinc-950 text-zinc-100 font-sans antialiased overflow-x-hidden">
@@ -2701,17 +2712,11 @@ export function AdminDashboard() {
                     </div>
                   )}
 
-                  {/* Charts Grid */}
-                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-in fade-in duration-300">
-                    <div className="lg:col-span-2">
+                  {/* Charts Grid — Full Width trend chart, no gap, no status donut chart, no category bar chart */}
+                  <div className="grid grid-cols-1 gap-6 animate-in fade-in duration-300">
+                    <div>
                       <InteractiveTrendChart reports={allReports} />
                     </div>
-                    <div>
-                      <StatusDonutChart statusCounts={stats?.statusCounts || { Menunggu: 0, Diproses: 0, Selesai: 0, Ditolak: 0 }} />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-1 animate-in fade-in duration-300">
-                    <CategoryBarChart reports={allReports} />
                   </div>
 
                   {/* Regional Statistics Visualizer */}
@@ -2805,132 +2810,7 @@ export function AdminDashboard() {
                     </p>
                   </div>
 
-                  {/* Sebaran Wilayah Inferensial (3 Kolom Simultan) */}
-                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-in fade-in duration-300">
-                    
-                    {/* Card 1: Sebaran Provinsi */}
-                    <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-6 space-y-4">
-                      <div className="border-b border-zinc-800 pb-3 flex items-center justify-between">
-                        <h3 className="text-xs font-bold text-zinc-100 uppercase tracking-wider flex items-center gap-1.5">
-                          <Activity className="h-4 w-4 text-purple-400" /> Sebaran Provinsi
-                        </h3>
-                        <span className="bg-zinc-950 px-2 py-0.5 rounded text-[9px] font-mono text-zinc-500">
-                          {Object.keys(geoStats.provinces).length} Wilayah
-                        </span>
-                      </div>
-                      
-                      <div className="space-y-3.5 max-h-[220px] overflow-y-auto pr-0.5">
-                        {(() => {
-                          const total = Object.values(geoStats.provinces).reduce((a, b) => a + b, 0);
-                          const sorted = Object.entries(geoStats.provinces).sort((a, b) => b[1] - a[1]).slice(0, 5);
-                          if (sorted.length === 0) {
-                            return <div className="text-center py-8 text-[11px] text-zinc-500 italic">Belum ada data Provinsi</div>;
-                          }
-                          return sorted.map(([name, count]) => {
-                            const percent = total > 0 ? Math.round((count / total) * 100) : 0;
-                            return (
-                              <div key={name} className="space-y-1">
-                                <div className="flex justify-between items-center text-[10.5px]">
-                                  <span className="font-semibold text-zinc-300 truncate max-w-[150px]">{name}</span>
-                                  <span className="text-zinc-500 font-mono text-[9.5px]">{count} ({percent}%)</span>
-                                </div>
-                                <div className="h-2 w-full bg-zinc-950 rounded-full overflow-hidden border border-zinc-800/60">
-                                  <motion.div
-                                    initial={{ width: 0 }}
-                                    animate={{ width: `${percent}%` }}
-                                    transition={{ duration: 0.8, ease: 'easeOut' }}
-                                    className="h-full rounded-full bg-gradient-to-r from-purple-500 to-indigo-500"
-                                  />
-                                </div>
-                              </div>
-                            );
-                          });
-                        })()}
-                      </div>
-                    </div>
 
-                    {/* Card 2: Sebaran Kabupaten / Kota */}
-                    <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-6 space-y-4">
-                      <div className="border-b border-zinc-800 pb-3 flex items-center justify-between">
-                        <h3 className="text-xs font-bold text-zinc-100 uppercase tracking-wider flex items-center gap-1.5">
-                          <Activity className="h-4 w-4 text-indigo-400" /> Sebaran Kabupaten / Kota
-                        </h3>
-                        <span className="bg-zinc-950 px-2 py-0.5 rounded text-[9px] font-mono text-zinc-500">
-                          {Object.keys(geoStats.cities).length} Wilayah
-                        </span>
-                      </div>
-                      
-                      <div className="space-y-3.5 max-h-[220px] overflow-y-auto pr-0.5">
-                        {(() => {
-                          const total = Object.values(geoStats.cities).reduce((a, b) => a + b, 0);
-                          const sorted = Object.entries(geoStats.cities).sort((a, b) => b[1] - a[1]).slice(0, 5);
-                          if (sorted.length === 0) {
-                            return <div className="text-center py-8 text-[11px] text-zinc-500 italic">Belum ada data Kota</div>;
-                          }
-                          return sorted.map(([name, count]) => {
-                            const percent = total > 0 ? Math.round((count / total) * 100) : 0;
-                            return (
-                              <div key={name} className="space-y-1">
-                                <div className="flex justify-between items-center text-[10.5px]">
-                                  <span className="font-semibold text-zinc-300 truncate max-w-[150px]">{name}</span>
-                                  <span className="text-zinc-500 font-mono text-[9.5px]">{count} ({percent}%)</span>
-                                </div>
-                                <div className="h-2 w-full bg-zinc-950 rounded-full overflow-hidden border border-zinc-800/60">
-                                  <motion.div
-                                    initial={{ width: 0 }}
-                                    animate={{ width: `${percent}%` }}
-                                    transition={{ duration: 0.8, ease: 'easeOut' }}
-                                    className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-blue-500"
-                                  />
-                                </div>
-                              </div>
-                            );
-                          });
-                        })()}
-                      </div>
-                    </div>
-
-                    {/* Card 3: Sebaran Kecamatan */}
-                    <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-6 space-y-4">
-                      <div className="border-b border-zinc-800 pb-3 flex items-center justify-between">
-                        <h3 className="text-xs font-bold text-zinc-100 uppercase tracking-wider flex items-center gap-1.5">
-                          <Activity className="h-4 w-4 text-teal-400" /> Sebaran Kecamatan
-                        </h3>
-                        <span className="bg-zinc-950 px-2 py-0.5 rounded text-[9px] font-mono text-zinc-500">
-                          {Object.keys(geoStats.districts).length} Wilayah
-                        </span>
-                      </div>
-                      
-                      <div className="space-y-3.5 max-h-[220px] overflow-y-auto pr-0.5">
-                        {(() => {
-                          const total = Object.values(geoStats.districts).reduce((a, b) => a + b, 0);
-                          const sorted = Object.entries(geoStats.districts).sort((a, b) => b[1] - a[1]).slice(0, 5);
-                          if (sorted.length === 0) {
-                            return <div className="text-center py-8 text-[11px] text-zinc-500 italic">Belum ada data Kecamatan</div>;
-                          }
-                          return sorted.map(([name, count]) => {
-                            const percent = total > 0 ? Math.round((count / total) * 100) : 0;
-                            return (
-                              <div key={name} className="space-y-1">
-                                <div className="flex justify-between items-center text-[10.5px]">
-                                  <span className="font-semibold text-zinc-300 truncate max-w-[150px]">{name}</span>
-                                  <span className="text-zinc-500 font-mono text-[9.5px]">{count} ({percent}%)</span>
-                                </div>
-                                <div className="h-2 w-full bg-zinc-950 rounded-full overflow-hidden border border-zinc-800/60">
-                                  <motion.div
-                                    initial={{ width: 0 }}
-                                    animate={{ width: `${percent}%` }}
-                                    transition={{ duration: 0.8, ease: 'easeOut' }}
-                                    className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-500"
-                                  />
-                                </div>
-                              </div>
-                            );
-                          });
-                        })()}
-                      </div>
-                    </div>
-                  </div>
                 </div>
               )}
 

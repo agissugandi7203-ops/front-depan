@@ -478,7 +478,7 @@ export function HomePage() {
       </div>
 
       {/* ══ HEADER ═══════════════════════════════════════════════════════════ */}
-      <Navbar variant="floating" onCtaClick={handleStartChat} />
+      <Navbar activeItem="Beranda" onCtaClick={handleStartChat} />
 
       {/* ══ MAIN ═════════════════════════════════════════════════════════════ */}
       <main className="relative z-10 flex-1">

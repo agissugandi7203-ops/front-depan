@@ -39,8 +39,22 @@ export function AuthModal() {
 
   const cardRef = useRef<HTMLDivElement>(null)
 
-  // Clear errors when view changes
+  // Clear errors and input fields when modal opens or view changes
   useEffect(() => {
+    if (isOpen) {
+      setLoginEmail('')
+      setLoginPassword('')
+      setRegForm({
+        email: '',
+        password: '',
+        konfirmasiPassword: '',
+        nama_lengkap: '',
+        nama_panggilan: '',
+        tanggal_lahir: '',
+        nomor_telepon: '',
+      })
+      setRegStep(1)
+    }
     setLoginError('')
     setRegError('')
     setRegErrors({})
