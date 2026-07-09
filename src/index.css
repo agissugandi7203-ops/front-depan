@@ -40,11 +40,11 @@
 
   body {
     @apply bg-background text-foreground;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     font-feature-settings: "ss01", "ss02", "cv01", "cv02";
-    letter-spacing: -0.01em;
+    letter-spacing: -0.015em;
   }
 
   /* ─── Premium text selection ─── */
@@ -258,4 +258,144 @@ input:-webkit-autofill:active {
   -webkit-text-fill-color: #e4e4e7 !important; /* text-zinc-200 */
   -webkit-box-shadow: 0 0 0px 1000px #09090b inset !important; /* bg-zinc-950 */
   transition: background-color 5000s ease-in-out 0s;
+}
+
+/* Global Select Options Styling */
+select option {
+  background-color: #09090b !important;
+  color: #f4f4f5 !important;
+}
+
+/* Custom Font Utilities */
+.font-lora {
+  font-family: 'Lora', Georgia, serif;
+}
+.font-jakarta {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+/* ─────────────────────────────────────────────────
+   AI MARKDOWN RESPONSE — highlight.js dark theme
+   Based on highlight.js "atom-one-dark" palette
+   ───────────────────────────────────────────────── */
+.hljs {
+  display: block;
+  overflow-x: auto;
+  padding: 0;
+  background: transparent;
+  color: #abb2bf;
+}
+.hljs-keyword,
+.hljs-operator,
+.hljs-selector-tag { color: #c678dd; }
+.hljs-string,
+.hljs-attr,
+.hljs-attribute { color: #98c379; }
+.hljs-comment,
+.hljs-quote { color: #5c6370; font-style: italic; }
+.hljs-number,
+.hljs-literal,
+.hljs-regexp { color: #d19a66; }
+.hljs-title,
+.hljs-section,
+.hljs-name { color: #61afef; }
+.hljs-type,
+.hljs-class .hljs-title { color: #e5c07b; }
+.hljs-built_in,
+.hljs-builtin-name { color: #56b6c2; }
+.hljs-variable,
+.hljs-template-variable { color: #e06c75; }
+.hljs-symbol,
+.hljs-bullet { color: #61aeee; }
+.hljs-tag { color: #e06c75; }
+.hljs-punctuation { color: #abb2bf; }
+.hljs-emphasis { font-style: italic; }
+.hljs-strong { font-weight: bold; }
+
+/* ─────────────────────────────────────────────────
+   AI MARKDOWN RESPONSE — prose container overrides
+   ───────────────────────────────────────────────── */
+.ai-markdown-response {
+  /* Ensure full width, no max-width constraints */
+  max-width: none;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+/* Remove default margins from first/last children */
+.ai-markdown-response > *:first-child {
+  margin-top: 0 !important;
+}
+.ai-markdown-response > *:last-child {
+  margin-bottom: 0 !important;
+}
+
+/* Nested list indentation */
+.ai-markdown-response ul ul,
+.ai-markdown-response ol ol,
+.ai-markdown-response ul ol,
+.ai-markdown-response ol ul {
+  margin-top: 0.375rem;
+  margin-bottom: 0;
+  padding-left: 1.25rem;
+}
+
+/* Streaming cursor blink animation (fallback for browsers not supporting Tailwind JIT) */
+@keyframes cursor-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+/* ─────────────────────────────────────────────────
+   PERFORMANCE OPTIMIZATIONS
+   ───────────────────────────────────────────────── */
+
+/* Respect prefers-reduced-motion — disable ALL animations/transitions for users who request it */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* GPU compositing hint for animated elements — browser promotes to own layer */
+.navbar-fixed,
+[data-framer-component-type] {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* content-visibility: auto — browser skips rendering off-screen sections entirely
+   This is the #1 CSS trick for long pages on mobile */
+section {
+  content-visibility: auto;
+  contain-intrinsic-size: 0 500px; /* estimated height placeholder to prevent layout shift */
+}
+
+/* Prevent browser from doing hit-test work on decorative blobs/glows */
+.pointer-events-none {
+  contain: strict;
+}
+
+/* Reduce paint area for scrollable containers */
+.overflow-x-auto,
+.overflow-y-auto,
+.overflow-auto {
+  -webkit-overflow-scrolling: touch; /* momentum scroll on iOS */
+  overscroll-behavior: contain;      /* prevent scroll chaining to parent */
+}
+
+/* Optimize image rendering on high-DPI mobile screens */
+img {
+  image-rendering: auto;
+  max-width: 100%;
+  height: auto;
+}
+
+/* Video: prevent GPU layer thrash on mobile */
+video {
+  transform: translateZ(0);
+  will-change: auto;
 }

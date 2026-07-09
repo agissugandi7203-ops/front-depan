@@ -9,6 +9,8 @@ const queryClient = new QueryClient({
     queries: {
       refetchOnWindowFocus: false,
       retry: false,
+      staleTime: 5 * 60 * 1000,    // Data stays fresh for 5 min — prevents redundant fetches on tab switch
+      gcTime: 10 * 60 * 1000,      // Keep unused cache in memory for 10 min
     },
   },
 })

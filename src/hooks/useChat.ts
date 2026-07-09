@@ -4,8 +4,8 @@ import { chatService } from '@/services/api'
 import { Message, SearchResultItem, SearchProgress } from '@/types'
 import { generateId } from '@/lib/utils'
 
-const host = typeof window !== 'undefined' ? window.location.hostname : 'localhost'
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || `http://${host}:3000`
+import { API_BASE_URL } from '@/lib/apiConfig'
+
 
 export function useChat() {
   const [isLoading, setIsLoading] = useState(false)

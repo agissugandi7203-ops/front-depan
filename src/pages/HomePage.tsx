@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback, lazy, Suspense } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion'
 import {
   Bot, Shield, FileText, Users,
   ArrowRight, Loader2, Sparkles,
@@ -14,8 +14,14 @@ import { useChatStore } from '@/store/chatStore'
 import { useToast } from '@/components/ui/toast'
 import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/store/authStore'
+import { useAuthModalStore } from '@/store/authModalStore'
 import Footer4Col from '@/components/ui/footer-column'
-import { MermaidDiagram } from '@/components/MermaidDiagram'
+import { Navbar } from '@/components/Navbar'
+
+// MermaidDiagram lazy-loaded — Mermaid library is ~2MB, only load when needed
+const MermaidDiagram = lazy(() =>
+  import('@/components/MermaidDiagram').then(m => ({ default: m.MermaidDiagram }))
+)
 
 // ─── Shared animation presets ────────────────────────────────────────────────
 const fadeUp = {
@@ -133,7 +139,11 @@ const renderSummaryContent = (text: string) => {
     // Handle code block closing
     if (trimmed === '```' && inCodeBlock) {
       if (inMermaidBlock && mermaidLines.length > 0) {
-        elements.push(<MermaidDiagram key={`mermaid-${idx}`} chart={mermaidLines.join('\n')} />)
+        elements.push(
+          <Suspense key={`mermaid-${idx}`} fallback={<div className="my-4 h-16 rounded-xl bg-zinc-900/80 border border-purple-900/30 animate-pulse" />}>
+            <MermaidDiagram chart={mermaidLines.join('\n')} />
+          </Suspense>
+        )
       }
       inCodeBlock = false
       inMermaidBlock = false
@@ -234,7 +244,6 @@ export function HomePage() {
   const [claimResult, setClaimResult]   = useState<any>(null)
   const [docLoading, setDocLoading]     = useState(false)
   const [docResult, setDocResult]       = useState<any>(null)
-  const [isScrolled, setIsScrolled] = useState(false)
 
   // For Claim Verifier Image
   const [claimImage, setClaimImage] = useState<{ base64: string; mimeType: string; name: string } | null>(null)
@@ -251,11 +260,12 @@ export function HomePage() {
   const navigate = useNavigate()
   const { toast } = useToast()
 
-  const { isAuthenticated, user, logout, checkMe } = useAuthStore()
+  const { isAuthenticated, user, checkMe } = useAuthStore()
+  const { openModal } = useAuthModalStore()
 
   useEffect(() => {
     if (isAuthenticated && !user) {
-      checkMe().catch(err => console.error('Sesi gagal dimuat:', err))
+      checkMe().catch(() => {})
     }
   }, [isAuthenticated, user, checkMe])
 
@@ -319,14 +329,14 @@ export function HomePage() {
     }
   }, [])
 
-  const handleStartChat = () => {
+  const handleStartChat = useCallback(() => {
     const id = createSession(undefined, user?.id)
     setCurrentSession(id)
     navigate('/chat')
-  }
+  }, [createSession, user?.id, setCurrentSession, navigate])
 
   // --- Claim Image Handlers ---
-  const handleClaimImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleClaimImageChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
 
@@ -352,9 +362,9 @@ export function HomePage() {
     }
     reader.readAsDataURL(file)
     if (fileInputClaimRef.current) fileInputClaimRef.current.value = ''
-  }
+  }, [toast])
 
-  const handlePasteClaim = (e: React.ClipboardEvent) => {
+  const handlePasteClaim = useCallback((e: React.ClipboardEvent) => {
     const items = e.clipboardData?.items
     if (!items) return
 
@@ -380,9 +390,9 @@ export function HomePage() {
         }
       }
     }
-  }
+  }, [])
 
-  const handleVerifyClaim = async (e: React.FormEvent) => {
+  const handleVerifyClaim = useCallback(async (e: React.FormEvent) => {
     e.preventDefault()
     if (!claim.trim() && !claimImage) return
     setClaimLoading(true)
@@ -406,10 +416,10 @@ export function HomePage() {
     } finally {
       setClaimLoading(false)
     }
-  }
+  }, [claim, claimImage, toast])
 
   // --- Document File Handlers ---
-  const processDocumentFile = async (file: File) => {
+  const processDocumentFile = useCallback(async (file: File) => {
     const supportedExtensions = ['pdf', 'docx', 'xlsx', 'xls', 'txt', 'md', 'markdown']
     const extension = file.name.split('.').pop()?.toLowerCase() || ''
     
@@ -446,35 +456,35 @@ export function HomePage() {
     } finally {
       setDocExtractLoading(false)
     }
-  }
+  }, [toast])
 
-  const handleDocFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleDocFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
       processDocumentFile(file)
     }
     if (fileInputDocRef.current) fileInputDocRef.current.value = ''
-  }
+  }, [processDocumentFile])
 
-  const handleDragOver = (e: React.DragEvent) => {
+  const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault()
     setIsDraggingDoc(true)
-  }
+  }, [])
 
-  const handleDragLeave = () => {
+  const handleDragLeave = useCallback(() => {
     setIsDraggingDoc(false)
-  }
+  }, [])
 
-  const handleDrop = (e: React.DragEvent) => {
+  const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault()
     setIsDraggingDoc(false)
     const file = e.dataTransfer.files?.[0]
     if (file) {
       processDocumentFile(file)
     }
-  }
+  }, [processDocumentFile])
 
-  const handlePasteDoc = (e: React.ClipboardEvent) => {
+  const handlePasteDoc = useCallback((e: React.ClipboardEvent) => {
     const items = e.clipboardData?.items
     if (!items) return
 
@@ -489,9 +499,9 @@ export function HomePage() {
         }
       }
     }
-  }
+  }, [processDocumentFile])
 
-  const handleSummarize = async (e: React.FormEvent) => {
+  const handleSummarize = useCallback(async (e: React.FormEvent) => {
     e.preventDefault()
     if (!docText.trim()) return
     setDocLoading(true)
@@ -505,7 +515,7 @@ export function HomePage() {
     } finally {
       setDocLoading(false)
     }
-  }
+  }, [docText, toast])
 
   // Verdict badge config
   const getVerdict = (result: any) => {
@@ -517,6 +527,18 @@ export function HomePage() {
 
   const verdict = getVerdict(claimResult)
 
+  // Parallax scroll setup for Hero text elements
+  const heroRef = useRef<HTMLDivElement>(null)
+  const { scrollYProgress: heroProgress } = useScroll({
+    target: heroRef,
+    offset: ["start start", "end end"]
+  })
+
+  // Text vertical offsets based on scroll progress
+  const titleY = useTransform(heroProgress, [0, 1], [0, -110])
+  const subtitleY = useTransform(heroProgress, [0, 1], [0, -70])
+  const ctaY = useTransform(heroProgress, [0, 1], [0, -40])
+
   return (
     <div className="min-h-screen bg-dot-pattern text-zinc-100 flex flex-col relative overflow-x-hidden">
       {/* ── Ambient radial glow — does not distract ── */}
@@ -526,125 +548,7 @@ export function HomePage() {
       </div>
 
       {/* ══ HEADER ═══════════════════════════════════════════════════════════ */}
-      <motion.header
-        initial={{ opacity: 0, y: -8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-        className={cn(
-          "fixed top-0 left-0 right-0 z-50 h-[60px] px-6 md:px-10 flex items-center justify-between transition-all duration-300",
-          isScrolled 
-            ? "border-b border-zinc-800 bg-zinc-950/85 backdrop-blur-md shadow-[0_4px_20px_rgba(0,0,0,0.4)]" 
-            : "border-b border-transparent bg-transparent"
-        )}
-      >
-        {/* Logo */}
-        <div className="flex items-center gap-2.5 select-none">
-          <img src="/assets/logo/komunitas.png" alt="KOMUNITAS Logo" className="h-7 w-7 object-contain rounded-md" />
-          <span className={cn(
-            "font-semibold text-[15px] tracking-[-0.02em] transition-colors duration-300",
-            isScrolled ? "text-zinc-100" : "text-zinc-950"
-          )}>KOMUNITAS</span>
-        </div>
-
-        {/* Nav - Center absolutely to prevent shifting */}
-        <nav className="absolute left-1/2 -translate-x-1/2 hidden md:flex items-center gap-7">
-          {(isAuthenticated && user ? ['Layanan', 'Verifikasi', 'Semua Aduan', 'Tentang', 'Profil'] : ['Layanan', 'Verifikasi', 'Semua Aduan', 'Tentang']).map((item) => (
-            <button
-              key={item}
-              className={cn(
-                "text-[13px] transition-colors duration-300 tracking-[-0.01em] cursor-pointer",
-                isScrolled 
-                  ? "text-zinc-400 hover:text-zinc-100" 
-                  : "text-zinc-800 hover:text-zinc-950 font-semibold"
-              )}
-              onClick={() => {
-                if (item === 'Verifikasi') {
-                  document.getElementById('tools-section')?.scrollIntoView({ behavior: 'smooth' })
-                } else if (item === 'Tentang') {
-                  navigate('/about')
-                } else if (item === 'Layanan') {
-                  document.getElementById('features-section')?.scrollIntoView({ behavior: 'smooth' })
-                } else if (item === 'Semua Aduan') {
-                  navigate('/all-reports')
-                } else if (item === 'Profil') {
-                  navigate('/profile')
-                }
-              }}
-            >
-              {item}
-            </button>
-          ))}
-        </nav>
-
-        <div className="flex items-center gap-3">
-          {isAuthenticated && user ? (
-            <div className="flex items-center gap-3">
-              <div 
-                className="hidden md:flex flex-col items-end text-right select-none"
-              >
-                <span className={cn(
-                  "text-[12px] font-bold tracking-tight",
-                  isScrolled ? "text-zinc-100" : "text-zinc-950"
-                )}>{user.nama_panggilan || user.nama_lengkap}</span>
-                <span className="text-[9px] uppercase font-mono text-zinc-500 font-semibold tracking-wider leading-none mt-0.5">[{user.role}]</span>
-              </div>
-
-              {/* Logout Button */}
-              <button
-                onClick={() => {
-                  logout()
-                  toast({ title: 'Sesi Berakhir', description: 'Anda telah berhasil keluar dari sistem.', type: 'info' })
-                }}
-                className={cn(
-                  "h-8 px-3 text-[11px] font-bold rounded-lg tracking-wide border transition-all duration-300 active:scale-[0.97] cursor-pointer",
-                  isScrolled
-                    ? "bg-zinc-900 hover:bg-zinc-850 text-zinc-200 border-zinc-800"
-                    : "bg-transparent hover:bg-zinc-900 text-zinc-900 hover:text-white border-zinc-900/30 hover:border-zinc-900"
-                )}
-              >
-                Keluar
-              </button>
-            </div>
-          ) : (
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => navigate('/login')}
-                className={cn(
-                  "h-8 px-3 text-[11px] font-bold rounded-lg tracking-wide border transition-all duration-300 active:scale-[0.97] cursor-pointer",
-                  isScrolled
-                    ? "bg-zinc-900 hover:bg-zinc-850 text-zinc-200 border-zinc-800"
-                    : "bg-transparent hover:bg-zinc-900 text-zinc-900 hover:text-white border-zinc-900/30 hover:border-zinc-900"
-                )}
-              >
-                Masuk
-              </button>
-              <button
-                onClick={() => navigate('/register')}
-                className={cn(
-                  "h-8 px-3 text-[11px] font-bold rounded-lg tracking-wide border transition-all duration-300 active:scale-[0.97] cursor-pointer",
-                  isScrolled
-                    ? "bg-white hover:bg-zinc-100 text-zinc-950 border-white"
-                    : "bg-transparent hover:bg-zinc-900 text-zinc-900 hover:text-white border-zinc-900/30 hover:border-zinc-900"
-                )}
-              >
-                Daftar
-              </button>
-            </div>
-          )}
-          
-          <Button
-            onClick={handleStartChat}
-            className={cn(
-              "h-8 px-4 text-[12px] font-medium rounded-md tracking-[-0.01em] transition-all duration-300 active:scale-[0.97] shadow-none cursor-pointer",
-              isScrolled
-                ? "bg-white hover:bg-zinc-100 text-zinc-950 border border-transparent"
-                : "bg-transparent hover:bg-zinc-900 text-zinc-900 hover:text-white border border-zinc-900/30 hover:border-zinc-900"
-            )}
-          >
-            Mulai Percakapan
-          </Button>
-        </div>
-      </motion.header>
+      <Navbar activeItem="Beranda" onCtaClick={handleStartChat} />
 
       {/* ══ MAIN ═════════════════════════════════════════════════════════════ */}
       <main className="relative z-10 flex-1">
@@ -706,6 +610,13 @@ export function HomePage() {
                 <ArrowRight className="w-4 h-4 relative z-10 transition-transform duration-300 group-hover:translate-x-1" />
               </a>
             </motion.div>
+                  </button>
+                </motion.div>
+
+              </div>
+
+            </div>
+>>>>>>> 43958cdb9d97588f7d0a8abd0fb55acea510475e
           </div>
         </section>
 
@@ -719,7 +630,7 @@ export function HomePage() {
             initial="hidden"
             whileInView="show"
             viewport={{ once: true, margin: '-80px' }}
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-px bg-zinc-800/80 rounded-xl overflow-hidden border border-zinc-800"
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"
           >
             {features.map((f, i) => {
               const Icon = f.icon
@@ -728,14 +639,14 @@ export function HomePage() {
                   key={i}
                   variants={fadeUp}
                   transition={{ duration: 0.45 }}
-                  className="group bg-zinc-900 hover:bg-zinc-800 transition-colors duration-300 p-7 flex flex-col gap-5"
+                  className="group relative rounded-2xl border border-zinc-800/80 bg-zinc-900/30 hover:bg-zinc-900/55 hover:border-zinc-700/60 p-6 flex flex-col gap-5 transition-all duration-300 shadow-sm"
                 >
-                  <div className="w-9 h-9 rounded-lg bg-zinc-800 border border-zinc-700 flex items-center justify-center group-hover:border-zinc-600 transition-colors">
-                    <Icon className="w-4 h-4 text-zinc-400" />
+                  <div className="w-9 h-9 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center group-hover:border-indigo-500/30 group-hover:bg-indigo-950/15 transition-all duration-300">
+                    <Icon className="w-4 h-4 text-zinc-400 group-hover:text-indigo-400 transition-colors duration-300" />
                   </div>
-                  <div className="space-y-1.5">
-                    <h3 className="text-[13px] font-semibold text-zinc-100 tracking-[-0.02em]">{f.title}</h3>
-                    <p className="text-[12px] text-zinc-500 leading-relaxed font-light">{f.description}</p>
+                  <div className="space-y-2">
+                    <h3 className="text-[14px] font-medium text-zinc-150 tracking-[-0.01em]">{f.title}</h3>
+                    <p className="text-[12.5px] text-zinc-450 leading-relaxed font-light">{f.description}</p>
                   </div>
                 </motion.div>
               )
@@ -746,18 +657,25 @@ export function HomePage() {
         {/* ── INTERACTIVE TOOLS ───────────────────────────────────────────── */}
         <section
           id="tools-section"
-          className="max-w-5xl mx-auto px-6 md:px-10 pb-32"
+          className="max-w-5xl mx-auto px-6 md:px-10 pb-32 relative"
         >
+          {/* Subtle background ambient glow for highlight */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[350px] bg-indigo-500/[0.015] rounded-full blur-[140px] pointer-events-none" />
+
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: '-60px' }}
             transition={{ duration: 0.5 }}
-            className="mb-10 space-y-2"
+            className="mb-12 flex flex-col items-center text-center space-y-2 relative z-10"
           >
-            <h2 className="text-[22px] md:text-[28px] font-semibold text-zinc-100 tracking-[-0.03em]">Alat Mandiri</h2>
-            <p className="text-[13px] text-zinc-500 font-light max-w-md leading-relaxed">
-              Gunakan langsung tanpa perlu membuka percakapan — cukup tempel teks dan dapatkan hasilnya.
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-mono font-medium bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 uppercase tracking-widest mb-1.5">
+              Akses Mandiri
+            </span>
+            <h2 className="text-[26px] md:text-[32px] font-semibold text-zinc-100 tracking-[-0.03em]">Alat Mandiri</h2>
+            <div className="h-0.5 w-10 bg-indigo-500/40 rounded-full my-1" />
+            <p className="text-[13.5px] text-zinc-400 font-normal max-w-md leading-relaxed pt-1">
+              Gunakan langsung tanpa perlu membuka percakapan — cukup tempel teks dan dapatkan hasilnya secara instan.
             </p>
           </motion.div>
 

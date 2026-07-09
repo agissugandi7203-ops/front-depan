@@ -1,17 +1,18 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
   User, Mail, Phone, Calendar, Shield, ArrowLeft,
-  Edit3, Save, X, Loader2, Lock, CheckCircle, Eye, EyeOff
+  Edit3, Save, X, Loader2, Lock, CheckCircle, Eye, EyeOff, Menu, Camera
 } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import { supabase } from '@/services/auth'
 import { cn } from '@/lib/utils'
 import axios from 'axios'
+import { Navbar } from '@/components/Navbar'
 
-const host = typeof window !== 'undefined' ? window.location.hostname : 'localhost'
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || `http://${host}:3000`
+import { API_BASE_URL } from '@/lib/apiConfig'
+
 
 const ROLE_LABELS: Record<string, { label: string; color: string; bg: string }> = {
   superadmin: { label: 'Super Admin', color: 'text-rose-400', bg: 'bg-rose-500/10 border-rose-500/20' },
@@ -37,12 +38,14 @@ function getAvatarGradient(name: string) {
 
 export default function ProfilePage() {
   const navigate = useNavigate()
-  const { user, isAuthenticated, checkMe } = useAuthStore()
+  const { user, isAuthenticated, checkMe, logout } = useAuthStore()
 
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [editing, setEditing] = useState(false)
   const [saving, setSaving] = useState(false)
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState('')
+  const [avatarUploading, setAvatarUploading] = useState(false)
 
   const [namaPanggilan, setNamaPanggilan] = useState('')
   const [nomorTelepon, setNomorTelepon] = useState('')
@@ -54,6 +57,40 @@ export default function ProfilePage() {
   const [pwdSaving, setPwdSaving] = useState(false)
   const [pwdSuccess, setPwdSuccess] = useState(false)
   const [pwdError, setPwdError] = useState('')
+
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    // Limit to 800KB for Base64 metadata storage
+    if (file.size > 800 * 1024) {
+      setError('Ukuran file foto maksimal 800KB.')
+      return
+    }
+
+    setAvatarUploading(true)
+    setError('')
+    try {
+      const reader = new FileReader()
+      reader.onloadend = async () => {
+        const base64String = reader.result as string
+        
+        const { error: updateErr } = await supabase.auth.updateUser({
+          data: { avatar_url: base64String }
+        })
+        if (updateErr) throw updateErr
+
+        await checkMe()
+        setSuccess(true)
+        setTimeout(() => setSuccess(false), 3000)
+      }
+      reader.readAsDataURL(file)
+    } catch (err: any) {
+      setError(err.message || 'Gagal memperbarui foto profil.')
+    } finally {
+      setAvatarUploading(false)
+    }
+  }
 
   useEffect(() => {
     if (!isAuthenticated) { navigate('/login'); return }
@@ -119,20 +156,9 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100">
-      {/* Header */}
-      <div className="border-b border-zinc-800/60 bg-zinc-900/80 backdrop-blur-sm sticky top-0 z-20">
-        <div className="max-w-2xl mx-auto px-4 py-4 flex items-center gap-3">
-          <button
-            onClick={() => navigate(-1)}
-            className="p-2 rounded-lg hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200 transition"
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </button>
-          <h1 className="text-base font-semibold tracking-tight">Profil Saya</h1>
-        </div>
-      </div>
+      <Navbar activeItem="Profil" />
 
-      <div className="max-w-2xl mx-auto px-4 py-8 space-y-5">
+      <div className="max-w-2xl mx-auto px-4 pt-20 pb-8 space-y-5">
         {/* Avatar + Name Card */}
         <motion.div
           initial={{ opacity: 0, y: 16 }}
@@ -142,13 +168,41 @@ export default function ProfilePage() {
           <div className={cn('h-20 bg-gradient-to-r opacity-50', avatarGradient)} />
           <div className="px-6 pb-6">
             <div className="flex items-end justify-between -mt-10 mb-4">
-              <div
-                className={cn(
-                  'w-20 h-20 rounded-2xl flex items-center justify-center text-2xl font-black text-white shadow-xl border-4 border-zinc-900 bg-gradient-to-br',
-                  avatarGradient
-                )}
-              >
-                {initials}
+              <div className="relative group/avatar cursor-pointer">
+                <input 
+                  type="file" 
+                  id="avatar-upload" 
+                  className="hidden" 
+                  accept="image/*" 
+                  onChange={handleAvatarChange}
+                  disabled={avatarUploading}
+                />
+                <label htmlFor="avatar-upload" className="cursor-pointer block relative">
+                  {user.avatar_url ? (
+                    <img 
+                      src={user.avatar_url} 
+                      alt={user.nama_lengkap} 
+                      className="w-20 h-20 rounded-2xl object-cover shadow-xl border-4 border-zinc-900 bg-zinc-950 transition duration-300 group-hover/avatar:opacity-75"
+                    />
+                  ) : (
+                    <div
+                      className={cn(
+                        'w-20 h-20 rounded-2xl flex items-center justify-center text-2xl font-black text-white shadow-xl border-4 border-zinc-900 bg-gradient-to-br transition duration-300 group-hover/avatar:opacity-75',
+                        avatarGradient
+                      )}
+                    >
+                      {initials}
+                    </div>
+                  )}
+                  {/* Overlay kamera saat hover */}
+                  <div className="absolute inset-0 bg-black/45 rounded-2xl flex items-center justify-center opacity-0 group-hover/avatar:opacity-100 transition duration-300">
+                    {avatarUploading ? (
+                      <Loader2 className="w-5 h-5 text-zinc-200 animate-spin" />
+                    ) : (
+                      <Camera className="w-5 h-5 text-zinc-200" />
+                    )}
+                  </div>
+                </label>
               </div>
               <span className={cn('px-3 py-1 rounded-full border text-xs font-semibold', roleInfo.bg, roleInfo.color)}>
                 {roleInfo.label}

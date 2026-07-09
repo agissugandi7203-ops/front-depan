@@ -12,8 +12,9 @@ import {
   CitizenReportResponse
 } from '@/types'
 
-const host = typeof window !== 'undefined' ? window.location.hostname : 'localhost'
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || `http://${host}:3000`
+import { API_BASE_URL } from '@/lib/apiConfig'
+import { useAuthStore } from '@/store/authStore'
+
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -39,6 +40,10 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error: AxiosError<ApiError>) => {
+    if (error.response?.status === 401) {
+      // Automatically log out user if token is invalid or expired
+      useAuthStore.getState().logout()
+    }
     const message = error.response?.data?.error || error.message || 'Terjadi kesalahan pada server'
     return Promise.reject(new Error(message))
   }

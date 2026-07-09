@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useState, memo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Message, SearchResultItem, SearchProgress } from '@/types'
 import { cn, formatTime } from '@/lib/utils'
 import { AlertCircle, Volume2, VolumeX, ChevronDown, ChevronUp, Copy, Check, Globe, Search, RefreshCw } from 'lucide-react'
+import { MarkdownRenderer } from './MarkdownRenderer'
 
 interface ChatMessageProps {
   message: Message
@@ -11,176 +12,7 @@ interface ChatMessageProps {
   onOpenSearchResults?: (results: SearchResultItem[]) => void
 }
 
-// ─── Inline markdown renderer ─────────────────────────────────────────────────
-const parseLinks = (text: string) => {
-  const parts = text.split(/(\[.*?\]\(.*?\))/g)
-  return parts.map((part, i) => {
-    const linkMatch = part.match(/^\[(.*?)\]\((.*?)\)$/)
-    if (linkMatch) {
-      const linkText = linkMatch[1]
-      const url = linkMatch[2]
-      return (
-        <a
-          key={i}
-          href={url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-zinc-100 hover:text-white underline underline-offset-4 decoration-zinc-700 hover:decoration-zinc-400 font-medium transition-colors"
-        >
-          {linkText}
-        </a>
-      )
-    }
-    return part
-  })
-}
 
-const parseItalics = (text: string) => {
-  const parts = text.split(/(\*.*?\*)/g)
-  return parts.flatMap((part, i): any => {
-    if (part.startsWith('*') && part.endsWith('*') && part.length > 2) {
-      return [
-        <em key={i} className="italic text-zinc-200">
-          {parseLinks(part.slice(1, -1))}
-        </em>
-      ]
-    }
-    return parseLinks(part)
-  })
-}
-
-const parseMarkdownText = (text: string) => {
-  const parts = text.split(/(\*\*.*?\*\*)/g)
-  return parts.flatMap((part, i): any => {
-    if (part.startsWith('**') && part.endsWith('**') && part.length > 4) {
-      return [
-        <strong key={`b-${i}`} className="font-semibold text-zinc-100">
-          {parseItalics(part.slice(2, -2))}
-        </strong>
-      ]
-    }
-    return parseItalics(part)
-  })
-}
-
-const renderContent = (text: string) => {
-  const lines = text.split('\n')
-  const elements: React.ReactNode[] = []
-  let inCodeBlock = false
-  let isMermaidBlock = false
-  let codeBuffer: string[] = []
-
-  lines.forEach((line, idx) => {
-    const trimmed = line.trim()
-    
-    // Toggle code block state and skip the delimiter line
-    if (trimmed.startsWith('```')) {
-      inCodeBlock = !inCodeBlock
-      isMermaidBlock = trimmed.startsWith('```mermaid')
-      
-      if (!isMermaidBlock && inCodeBlock) {
-        // Start buffering non-mermaid code lines
-        codeBuffer = []
-      } else if (!isMermaidBlock && !inCodeBlock) {
-        // Flush code buffer to layout
-        elements.push(
-          <pre key={`code-${idx}`} className="bg-zinc-950 border border-zinc-800 p-4 rounded-lg overflow-x-auto text-[12px] font-mono text-zinc-300 font-normal leading-relaxed my-3 max-w-full">
-            <code>{codeBuffer.join('\n')}</code>
-          </pre>
-        )
-        codeBuffer = []
-      }
-      return
-    }
-    
-    // Process lines inside a code block
-    if (inCodeBlock) {
-      if (!isMermaidBlock) {
-        codeBuffer.push(line)
-      }
-      return
-    }
-
-    // Skip empty lines or render as small vertical separator
-    if (!trimmed) {
-      elements.push(<div key={`empty-${idx}`} className="h-2" />)
-      return
-    }
-
-    // Render markdown horizontal dividers as clean borders
-    if (trimmed === '---' || trimmed === '***') {
-      elements.push(<hr key={`hr-${idx}`} className="border-t border-zinc-800 my-4" />)
-      return
-    }
-
-    // Render markdown headers
-    if (trimmed.startsWith('#')) {
-      const headerLevel = (trimmed.match(/^#+/) || ['#'])[0].length
-      const cleanHeader = trimmed.replace(/^#+\s*/, '')
-      const headerClass = headerLevel === 1 
-        ? "text-base font-bold text-zinc-100 mt-5 mb-2.5 tracking-tight" 
-        : headerLevel === 2
-        ? "text-sm font-semibold text-zinc-100 mt-4 mb-2 tracking-tight"
-        : "text-xs font-semibold text-zinc-200 mt-3 mb-1.5"
-      elements.push(
-        <div key={`h-${idx}`} className={headerClass}>
-          {parseMarkdownText(cleanHeader)}
-        </div>
-      )
-      return
-    }
-
-    // Unordered lists (support nested levels)
-    const bulletMatch = line.match(/^(\s*)([*+-])\s+(.*)/)
-    if (bulletMatch) {
-      const indentSpaces = bulletMatch[1].length
-      const indentLevel = Math.floor(indentSpaces / 2)
-      const content = bulletMatch[3]
-      elements.push(
-        <div 
-          key={`li-${idx}`} 
-          className="text-sm text-zinc-300 leading-relaxed mb-2 flex items-start gap-2.5"
-          style={{ paddingLeft: `${indentLevel * 1.25}rem` }}
-        >
-          <span className="text-zinc-500 shrink-0 select-none mt-1.5 text-[9px]">•</span>
-          <span className="flex-1">{parseMarkdownText(content)}</span>
-        </div>
-      )
-      return
-    }
-
-    // Ordered lists (support nested levels)
-    const numberMatch = line.match(/^(\s*)(\d+)\.\s+(.*)/)
-    if (numberMatch) {
-      const indentSpaces = numberMatch[1].length
-      const indentLevel = Math.floor(indentSpaces / 2)
-      const num = numberMatch[2]
-      const content = numberMatch[3]
-      elements.push(
-        <div 
-          key={`ol-${idx}`} 
-          className="text-sm text-zinc-300 leading-relaxed mb-2 flex items-start gap-2.5"
-          style={{ paddingLeft: `${indentLevel * 1.25}rem` }}
-        >
-          <span className="text-zinc-500 shrink-0 select-none font-mono text-[11px] mt-0.5 min-w-[14px] text-right">{num}.</span>
-          <span className="flex-1">{parseMarkdownText(content)}</span>
-        </div>
-      )
-      return
-    }
-
-    // Standard paragraph
-    elements.push(
-      <p key={`p-${idx}`} className="text-sm text-zinc-300 leading-relaxed mb-2 font-normal font-sans">
-        {parseMarkdownText(trimmed)}
-      </p>
-    )
-  })
-
-  return elements
-}
-
-// ─── Extract steps for flowchart ─────────────────────────────────────────────
 const parseSteps = (text: string): string[] => {
   const steps: string[] = []
   let inCodeBlock = false
@@ -203,7 +35,7 @@ const parseSteps = (text: string): string[] => {
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
-export function ChatMessage({ message, isStreaming, searchPhase, onOpenSearchResults }: ChatMessageProps) {
+export const ChatMessage = memo(function ChatMessage({ message, isStreaming, searchPhase, onOpenSearchResults }: ChatMessageProps) {
   const isUser  = message.role === 'user'
   const isError = message.isError
 
@@ -270,8 +102,8 @@ export function ChatMessage({ message, isStreaming, searchPhase, onOpenSearchRes
         )
       )}
 
-      {/* Message body */}
-      <div className={cn('flex flex-col gap-1.5', isUser ? 'items-end max-w-[75%]' : 'items-start max-w-[85%]')}>
+      {/* Message body — AI response fills full width like ChatGPT/Claude */}
+      <div className={cn('flex flex-col gap-1.5 min-w-0', isUser ? 'items-end max-w-[78%]' : 'items-start w-full')}>
 
         {/* Bubble */}
         <div className={cn(
@@ -324,10 +156,10 @@ export function ChatMessage({ message, isStreaming, searchPhase, onOpenSearchRes
                 )
               ) : (
                 <>
-                  {renderContent(typeof textContent === 'string' ? textContent : '')}
-                  {isStreaming && (
-                    <span className="inline-block w-1.5 h-3.5 bg-indigo-500 ml-1 align-middle animate-pulse rounded-sm" />
-                  )}
+                  <MarkdownRenderer
+                    content={typeof textContent === 'string' ? textContent : ''}
+                    isStreaming={isStreaming}
+                  />
                   {message.searchResults && message.searchResults.length > 0 && (
                     <div className="mt-3 pt-2.5 border-t border-zinc-800/40 flex">
                       <button
@@ -424,4 +256,4 @@ export function ChatMessage({ message, isStreaming, searchPhase, onOpenSearchRes
       </div>
     </motion.div>
   )
-}
+})

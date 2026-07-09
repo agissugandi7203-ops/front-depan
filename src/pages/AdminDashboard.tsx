@@ -27,6 +27,8 @@ import { authService } from '@/services/auth'
 import { useAuthStore } from '@/store/authStore'
 import { ReportMap } from '@/components/admin/ReportMap'
 import { cn } from '@/lib/utils'
+import { getWsUrl } from '@/lib/apiConfig'
+
 import { ChatWidget } from '@/components/chat/ChatWidget'
 
 // ─── Animation presets ──────────────────────────────────────────────────────
@@ -49,25 +51,34 @@ const CATEGORY_LABELS: Record<string, string> = {
   lainnya:    'Lainnya',
 }
 
-// ─── Stat Card ───────────────────────────────────────────────────────────────
-function StatCard({ icon: Icon, label, value, sub, colorClass }: {
-  icon: React.ElementType; label: string; value: number | string; sub?: string; colorClass: string
+// ─── Stat Card (Rigid Monochromatic Bento Design) ───────────────────────────
+function StatCard({ icon: Icon, label, value, sub }: {
+  icon: React.ElementType; label: string; value: number | string; sub?: string
 }) {
   return (
     <motion.div
       variants={fadeUp}
-      className="relative overflow-hidden rounded-lg border border-zinc-800 bg-zinc-900 p-5 hover:border-zinc-700 transition duration-200"
+      className="group relative overflow-hidden rounded-md border border-zinc-900 bg-[#101010] p-5 transition duration-300 hover:border-zinc-800 hover:bg-[#121212] select-none"
     >
-      <div className="flex items-start justify-between">
-        <div className={cn('flex h-9 w-9 items-center justify-center rounded-lg bg-zinc-950 border border-zinc-800', colorClass)}>
-          <Icon className="h-4.5 w-4.5" />
-        </div>
-        <TrendingUp className="h-4 w-4 text-zinc-500" />
+      {/* Precision accent bar on hover */}
+      <div className="absolute top-0 left-0 w-[2px] h-0 bg-[#DEDBC8] group-hover:h-3 transition-all duration-300" />
+      
+      <div className="flex items-center justify-between">
+        <span className="text-[9px] font-mono font-bold text-zinc-500 group-hover:text-zinc-400 uppercase tracking-[0.16em] transition-colors duration-300">
+          {label}
+        </span>
+        <Icon className="h-4 w-4 text-zinc-550 text-zinc-500 group-hover:text-[#DEDBC8] transition-colors duration-300 shrink-0" />
       </div>
-      <div className="mt-4">
-        <div className="text-2xl font-bold tracking-tight text-zinc-100">{value}</div>
-        <div className="mt-0.5 text-xs font-semibold text-zinc-400 uppercase tracking-wider text-[9px]">{label}</div>
-        {sub && <div className="mt-1 text-[10px] text-zinc-500 font-normal leading-normal">{sub}</div>}
+      
+      <div className="mt-3.5 space-y-0.5">
+        <div className="text-3xl font-mono font-bold tracking-tight text-zinc-100">
+          {value}
+        </div>
+        {sub && (
+          <div className="text-[10px] text-zinc-500 font-normal tracking-tight font-sans leading-normal">
+            {sub}
+          </div>
+        )}
       </div>
     </motion.div>
   )
@@ -1142,7 +1153,7 @@ function AddServiceModal({ onClose, onAdd }: { onClose: () => void; onAdd: (payl
               value={formData.address}
               onChange={e => setFormData(v => ({ ...v, address: e.target.value }))}
               placeholder="Contoh: Jl. Merdeka No. 12, Kelurahan C"
-              className="w-full h-9 rounded border border-zinc-800 bg-zinc-955 bg-zinc-950 px-3 text-zinc-200 outline-none focus:border-zinc-700"
+              className="w-full h-9 rounded border border-zinc-800 bg-zinc-950 bg-zinc-950 px-3 text-zinc-200 outline-none focus:border-zinc-700"
             />
           </div>
 
@@ -1330,7 +1341,7 @@ function AddRAGDocumentModal({ onClose, onAdd }: { onClose: () => void; onAdd: (
         </div>
 
         {error && (
-          <div className="mb-4 rounded border border-red-900/50 bg-red-955/50 p-3 text-red-400 font-semibold">
+          <div className="mb-4 rounded border border-red-900/50 bg-red-950/50 p-3 text-red-400 font-semibold">
             {error}
           </div>
         )}
@@ -1693,12 +1704,30 @@ function ChatTranscriptModal({ session, onClose }: { session: ChatHistorySession
 // ─── Main Dashboard ───────────────────────────────────────────────────────────
 export function AdminDashboard() {
   const navigate = useNavigate()
+  const { user, logout } = useAuthStore()
+
+  const navItemsAll = [
+    { id: 'overview',    label: 'Ringkasan',        icon: LayoutDashboard,  desc: 'Monitoring Overview',     roles: ['petugas','admin','superadmin'] },
+    { id: 'reports',     label: 'Laporan Warga',    icon: FileText,          desc: 'Citizen Reports',         roles: ['petugas','admin','superadmin'] },
+    { id: 'percakapan',  label: 'Percakapan Aktif', icon: MessageSquare,     desc: 'Live Active Chats',       roles: ['petugas','admin','superadmin'] },
+    { id: 'services',    label: 'Direktori RAG',    icon: BookOpen,          desc: 'RAG Knowledge Directory', roles: ['admin','superadmin'] },
+    { id: 'claims',      label: 'Cek Fakta',        icon: Shield,            desc: 'Fact Check & Claims',     roles: ['admin','superadmin'] },
+    { id: 'summaries',   label: 'Ringkasan Dok',    icon: FileSpreadsheet,   desc: 'Regulation Summaries',    roles: ['superadmin'] },
+    { id: 'histories',   label: 'Riwayat Chat',     icon: MessageSquare,     desc: 'Chat History Logs',       roles: ['superadmin'] },
+    { id: 'staff',       label: 'Kelola Staf',      icon: Users,             desc: 'Staff Management',        roles: ['superadmin'] },
+    { id: 'hoaks',       label: 'Database Hoaks',   icon: AlertTriangle,     desc: 'WhatsApp Hoax DB',        roles: ['admin','superadmin'] },
+  ] as const
+
+  const navItems = navItemsAll.filter(item =>
+    (item.roles as readonly string[]).includes(user?.role || '')
+  )
   
   // ─── Active Tab ───────────────────────────────────────────────────────────
   const [activeTab, setActiveTab] = useState<'overview' | 'reports' | 'services' | 'claims' | 'summaries' | 'histories' | 'percakapan' | 'staff' | 'hoaks'>('overview')
 
   // ─── Mobile Sidebar State ─────────────────────────────────────────────────
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
 
   // ─── Overview States ──────────────────────────────────────────────────────
   const [stats, setStats] = useState<DashboardStats | null>(null)
@@ -1809,7 +1838,7 @@ export function AdminDashboard() {
       setStats(data)
 
       // Fetch geographic data from all reports dynamically
-      const res = await adminService.getReports(undefined, 1, 1000)
+      const res = await adminService.getReports(undefined, 1, 100000)
       const list = res.reports || []
       setAllReports(list)
 
@@ -2045,8 +2074,7 @@ export function AdminDashboard() {
         ws.close()
       }
 
-      const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws'
-      const wsUrl = `${protocol}://${window.location.hostname}:3000/api/ws/admin`
+      const wsUrl = getWsUrl('/api/ws/admin')
 
       console.log('🔌 Connecting to Admin WebSocket:', wsUrl)
       ws = new WebSocket(wsUrl)
@@ -2126,6 +2154,15 @@ export function AdminDashboard() {
     }
     checkAuthStatus()
   }, [navigate])
+
+  useEffect(() => {
+    if (user) {
+      const allowedTabIds = navItems.map(item => item.id)
+      if (!allowedTabIds.includes(activeTab as any)) {
+        setActiveTab('overview')
+      }
+    }
+  }, [activeTab, user, navItems])
 
   useEffect(() => {
     setLoading(true)
@@ -2449,17 +2486,7 @@ export function AdminDashboard() {
     { icon: FileSpreadsheet, label: 'Ringkasan (AI)',  value: stats.totalSummaries || 0,         colorClass: 'text-teal-400',   sub: 'Dokumen regulasi diringkas' },
   ] : []
 
-  const navItems = [
-    { id: 'overview',    label: 'Ringkasan',       icon: LayoutDashboard,  desc: 'Monitoring Overview' },
-    { id: 'reports',     label: 'Laporan Warga',   icon: FileText,         desc: 'Citizen Reports' },
-    { id: 'services',    label: 'Direktori RAG',   icon: BookOpen,         desc: 'RAG Knowledge Directory' },
-    { id: 'claims',      label: 'Cek Fakta',       icon: Shield,           desc: 'Fact Check & Claims' },
-    { id: 'summaries',   label: 'Ringkasan Dok',   icon: FileSpreadsheet,  desc: 'Regulation Summaries' },
-    { id: 'histories',   label: 'Riwayat Chat',    icon: MessageSquare,    desc: 'Chat History Logs' },
-    { id: 'percakapan',  label: 'Percakapan Aktif',icon: MessageSquare,    desc: 'Live Active Chats' },
-    { id: 'staff',       label: 'Kelola Staf',     icon: Users,            desc: 'Staff Management' },
-    { id: 'hoaks',       label: 'Database Hoaks',  icon: AlertTriangle,    desc: 'WhatsApp Hoax DB' },
-  ] as const
+
 
   return (
     <div className="flex min-h-screen bg-zinc-950 text-zinc-100 font-sans antialiased overflow-x-hidden">
@@ -2474,23 +2501,35 @@ export function AdminDashboard() {
       {/* Sidebar */}
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-40 w-64 border-r border-zinc-800 bg-zinc-900 flex flex-col transition-transform duration-200 md:translate-x-0",
-          isSidebarOpen ? "translate-x-0" : "-translate-x-full"
+          "fixed inset-y-0 left-0 z-40 border-r border-zinc-800 bg-zinc-900 flex flex-col transition-all duration-300 md:translate-x-0",
+          isSidebarCollapsed ? "w-20" : "w-64",
+          isSidebarOpen ? "translate-x-0" : "-translate-x-full md:transform-none"
         )}
       >
+        {/* Sidebar Collapse Toggle Button */}
+        <button
+          onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+          className="hidden md:flex absolute -right-3 top-4 z-50 h-6 w-6 items-center justify-center rounded-full border border-zinc-850 bg-zinc-950 text-zinc-400 hover:text-zinc-150 transition shadow-md active:scale-90 cursor-pointer"
+          title={isSidebarCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+        >
+          {isSidebarCollapsed ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronLeft className="h-3.5 w-3.5" />}
+        </button>
+
         {/* Brand Header */}
-        <div className="flex h-14 items-center gap-3 px-5 border-b border-zinc-800 bg-zinc-950/20">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-955 bg-zinc-905 bg-zinc-950 shadow-sm">
+        <div className={cn("flex h-14 items-center border-b border-zinc-800 bg-zinc-950/20 px-5", isSidebarCollapsed ? "justify-center px-0" : "gap-3")}>
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-950 shadow-sm">
             <Shield className="h-4.5 w-4.5 text-zinc-300" />
           </div>
-          <div>
-            <div className="text-xs font-bold text-zinc-100 uppercase tracking-wider">KOMUNITAS</div>
-            <div className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider leading-none mt-0.5">Admin Portal</div>
-          </div>
+          {!isSidebarCollapsed && (
+            <div>
+              <div className="text-xs font-bold text-zinc-100 uppercase tracking-wider">KOMUNITAS</div>
+              <div className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider leading-none mt-0.5">Admin Portal</div>
+            </div>
+          )}
         </div>
 
         {/* Navigation links */}
-        <nav className="flex-1 space-y-1 px-3 py-4 overflow-y-auto scrollbar-none">
+        <nav className="flex-1 space-y-1.5 px-3 py-4 overflow-y-auto scrollbar-none">
           {navItems.map(item => {
             const Icon = item.icon
             const isActive = activeTab === item.id
@@ -2503,46 +2542,60 @@ export function AdminDashboard() {
                   setIsSidebarOpen(false)
                 }}
                 className={cn(
-                  "w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-left transition active:scale-[0.98]",
+                  "w-full flex items-center rounded-xl transition active:scale-[0.98] cursor-pointer",
+                  isSidebarCollapsed ? "justify-center p-2.5" : "gap-3 px-3.5 py-2.5 text-left",
                   isActive
-                    ? "bg-zinc-950 text-zinc-100 border border-zinc-800 shadow-md font-semibold"
+                    ? "bg-zinc-950 text-zinc-100 border border-zinc-800 shadow-md font-semibold shadow-indigo-950/30"
                     : "text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 border border-transparent"
                 )}
+                title={isSidebarCollapsed ? item.label : undefined}
               >
-                <Icon className={cn("h-4 w-4 flex-shrink-0", isActive ? "text-zinc-100" : "text-zinc-500")} />
-                <div className="flex flex-col">
-                  <span className="text-xs leading-tight">{item.label}</span>
-                  <span className="text-[9px] text-zinc-500 font-normal leading-normal mt-0.5">{item.desc}</span>
-                </div>
+                <Icon className={cn("h-4.5 w-4.5 flex-shrink-0", isActive ? "text-indigo-400" : "text-zinc-500")} />
+                {!isSidebarCollapsed && (
+                  <div className="flex flex-col">
+                    <span className="text-xs leading-tight">{item.label}</span>
+                    <span className="text-[9px] text-zinc-500 font-normal leading-normal mt-0.5">{item.desc}</span>
+                  </div>
+                )}
               </button>
             )
           })}
         </nav>
 
         {/* Workspace Session info */}
-        <div className="border-t border-zinc-800 p-4 bg-zinc-950/30">
-          <div className="flex flex-col gap-2 min-w-0 sm:flex-row sm:items-center sm:justify-between">
-            <div className="min-w-0">
-              <div className="text-[9px] text-zinc-500 uppercase tracking-wider font-semibold">Active Session</div>
-              <div className="text-xs font-bold text-zinc-300 truncate">Administrator</div>
-            </div>
+        <div className="border-t border-zinc-800 p-3 bg-zinc-950/30">
+          <div className={cn("flex items-center justify-between gap-2 min-w-0", isSidebarCollapsed ? "flex-col" : "flex-row")}>
+            {!isSidebarCollapsed && (
+              <div className="min-w-0">
+                <div className="text-[9px] text-zinc-500 uppercase tracking-wider font-semibold">Active Session</div>
+                <div className="text-xs font-bold text-zinc-300 truncate" title={user?.nama_lengkap || 'Administrator'}>
+                  {user?.nama_panggilan || user?.nama_lengkap || 'Admin'}
+                </div>
+              </div>
+            )}
             <button
               onClick={async () => {
-                await authService.logout()
-                navigate('/admin/login', { replace: true })
+                await logout()
+                navigate('/login', { replace: true })
               }}
-              className="flex h-8 w-full sm:w-8 items-center justify-center gap-1.5 sm:gap-0 rounded-lg border border-zinc-800 bg-zinc-950 text-zinc-400 hover:text-rose-400 hover:border-rose-900 transition active:scale-95 px-3 sm:px-0"
+              className={cn(
+                "flex h-8 items-center justify-center gap-1.5 rounded-lg border border-zinc-800 bg-zinc-950 text-zinc-400 hover:text-rose-400 hover:border-rose-900 transition active:scale-95 cursor-pointer",
+                isSidebarCollapsed ? "w-8 p-0" : "px-3"
+              )}
               title="Logout"
             >
               <LogOut className="h-3.5 w-3.5" />
-              <span className="text-xs font-semibold sm:hidden">Logout</span>
+              {!isSidebarCollapsed && <span className="text-xs font-semibold">Keluar</span>}
             </button>
           </div>
         </div>
       </aside>
 
       {/* Main Content Area */}
-      <div className="flex-1 md:pl-64 flex flex-col min-h-screen min-w-0 w-full overflow-x-hidden">
+      <div className={cn(
+        "flex-1 flex flex-col min-h-screen min-w-0 w-full overflow-x-hidden transition-all duration-300",
+        isSidebarCollapsed ? "md:pl-20" : "md:pl-64"
+      )}>
         {/* Topbar */}
         <header className="sticky top-0 z-20 border-b border-zinc-800 bg-zinc-900/80 backdrop-blur-md">
           <div className="flex h-14 items-center justify-between px-6">
@@ -2668,17 +2721,11 @@ export function AdminDashboard() {
                     </div>
                   )}
 
-                  {/* Charts Grid */}
-                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-in fade-in duration-300">
-                    <div className="lg:col-span-2">
+                  {/* Charts Grid — Full Width trend chart, no gap, no status donut chart, no category bar chart */}
+                  <div className="grid grid-cols-1 gap-6 animate-in fade-in duration-300">
+                    <div>
                       <InteractiveTrendChart reports={allReports} />
                     </div>
-                    <div>
-                      <StatusDonutChart statusCounts={stats?.statusCounts || { Menunggu: 0, Diproses: 0, Selesai: 0, Ditolak: 0 }} />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-1 animate-in fade-in duration-300">
-                    <CategoryBarChart reports={allReports} />
                   </div>
 
                   {/* Regional Statistics Visualizer */}
@@ -2772,132 +2819,7 @@ export function AdminDashboard() {
                     </p>
                   </div>
 
-                  {/* Sebaran Wilayah Inferensial (3 Kolom Simultan) */}
-                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-in fade-in duration-300">
-                    
-                    {/* Card 1: Sebaran Provinsi */}
-                    <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-6 space-y-4">
-                      <div className="border-b border-zinc-800 pb-3 flex items-center justify-between">
-                        <h3 className="text-xs font-bold text-zinc-100 uppercase tracking-wider flex items-center gap-1.5">
-                          <Activity className="h-4 w-4 text-purple-400" /> Sebaran Provinsi
-                        </h3>
-                        <span className="bg-zinc-950 px-2 py-0.5 rounded text-[9px] font-mono text-zinc-500">
-                          {Object.keys(geoStats.provinces).length} Wilayah
-                        </span>
-                      </div>
-                      
-                      <div className="space-y-3.5 max-h-[220px] overflow-y-auto pr-0.5">
-                        {(() => {
-                          const total = Object.values(geoStats.provinces).reduce((a, b) => a + b, 0);
-                          const sorted = Object.entries(geoStats.provinces).sort((a, b) => b[1] - a[1]).slice(0, 5);
-                          if (sorted.length === 0) {
-                            return <div className="text-center py-8 text-[11px] text-zinc-500 italic">Belum ada data Provinsi</div>;
-                          }
-                          return sorted.map(([name, count]) => {
-                            const percent = total > 0 ? Math.round((count / total) * 100) : 0;
-                            return (
-                              <div key={name} className="space-y-1">
-                                <div className="flex justify-between items-center text-[10.5px]">
-                                  <span className="font-semibold text-zinc-300 truncate max-w-[150px]">{name}</span>
-                                  <span className="text-zinc-500 font-mono text-[9.5px]">{count} ({percent}%)</span>
-                                </div>
-                                <div className="h-2 w-full bg-zinc-950 rounded-full overflow-hidden border border-zinc-800/60">
-                                  <motion.div
-                                    initial={{ width: 0 }}
-                                    animate={{ width: `${percent}%` }}
-                                    transition={{ duration: 0.8, ease: 'easeOut' }}
-                                    className="h-full rounded-full bg-gradient-to-r from-purple-500 to-indigo-500"
-                                  />
-                                </div>
-                              </div>
-                            );
-                          });
-                        })()}
-                      </div>
-                    </div>
 
-                    {/* Card 2: Sebaran Kabupaten / Kota */}
-                    <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-6 space-y-4">
-                      <div className="border-b border-zinc-800 pb-3 flex items-center justify-between">
-                        <h3 className="text-xs font-bold text-zinc-100 uppercase tracking-wider flex items-center gap-1.5">
-                          <Activity className="h-4 w-4 text-indigo-400" /> Sebaran Kabupaten / Kota
-                        </h3>
-                        <span className="bg-zinc-950 px-2 py-0.5 rounded text-[9px] font-mono text-zinc-500">
-                          {Object.keys(geoStats.cities).length} Wilayah
-                        </span>
-                      </div>
-                      
-                      <div className="space-y-3.5 max-h-[220px] overflow-y-auto pr-0.5">
-                        {(() => {
-                          const total = Object.values(geoStats.cities).reduce((a, b) => a + b, 0);
-                          const sorted = Object.entries(geoStats.cities).sort((a, b) => b[1] - a[1]).slice(0, 5);
-                          if (sorted.length === 0) {
-                            return <div className="text-center py-8 text-[11px] text-zinc-500 italic">Belum ada data Kota</div>;
-                          }
-                          return sorted.map(([name, count]) => {
-                            const percent = total > 0 ? Math.round((count / total) * 100) : 0;
-                            return (
-                              <div key={name} className="space-y-1">
-                                <div className="flex justify-between items-center text-[10.5px]">
-                                  <span className="font-semibold text-zinc-300 truncate max-w-[150px]">{name}</span>
-                                  <span className="text-zinc-500 font-mono text-[9.5px]">{count} ({percent}%)</span>
-                                </div>
-                                <div className="h-2 w-full bg-zinc-950 rounded-full overflow-hidden border border-zinc-800/60">
-                                  <motion.div
-                                    initial={{ width: 0 }}
-                                    animate={{ width: `${percent}%` }}
-                                    transition={{ duration: 0.8, ease: 'easeOut' }}
-                                    className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-blue-500"
-                                  />
-                                </div>
-                              </div>
-                            );
-                          });
-                        })()}
-                      </div>
-                    </div>
-
-                    {/* Card 3: Sebaran Kecamatan */}
-                    <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-6 space-y-4">
-                      <div className="border-b border-zinc-800 pb-3 flex items-center justify-between">
-                        <h3 className="text-xs font-bold text-zinc-100 uppercase tracking-wider flex items-center gap-1.5">
-                          <Activity className="h-4 w-4 text-teal-400" /> Sebaran Kecamatan
-                        </h3>
-                        <span className="bg-zinc-950 px-2 py-0.5 rounded text-[9px] font-mono text-zinc-500">
-                          {Object.keys(geoStats.districts).length} Wilayah
-                        </span>
-                      </div>
-                      
-                      <div className="space-y-3.5 max-h-[220px] overflow-y-auto pr-0.5">
-                        {(() => {
-                          const total = Object.values(geoStats.districts).reduce((a, b) => a + b, 0);
-                          const sorted = Object.entries(geoStats.districts).sort((a, b) => b[1] - a[1]).slice(0, 5);
-                          if (sorted.length === 0) {
-                            return <div className="text-center py-8 text-[11px] text-zinc-500 italic">Belum ada data Kecamatan</div>;
-                          }
-                          return sorted.map(([name, count]) => {
-                            const percent = total > 0 ? Math.round((count / total) * 100) : 0;
-                            return (
-                              <div key={name} className="space-y-1">
-                                <div className="flex justify-between items-center text-[10.5px]">
-                                  <span className="font-semibold text-zinc-300 truncate max-w-[150px]">{name}</span>
-                                  <span className="text-zinc-500 font-mono text-[9.5px]">{count} ({percent}%)</span>
-                                </div>
-                                <div className="h-2 w-full bg-zinc-950 rounded-full overflow-hidden border border-zinc-800/60">
-                                  <motion.div
-                                    initial={{ width: 0 }}
-                                    animate={{ width: `${percent}%` }}
-                                    transition={{ duration: 0.8, ease: 'easeOut' }}
-                                    className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-500"
-                                  />
-                                </div>
-                              </div>
-                            );
-                          });
-                        })()}
-                      </div>
-                    </div>
-                  </div>
                 </div>
               )}
 
@@ -3089,8 +3011,8 @@ export function AdminDashboard() {
                               className={cn(
                                 'flex h-7 w-7 items-center justify-center rounded-lg text-xs font-semibold border transition',
                                 page === p
-                                  ? 'bg-zinc-100 text-zinc-955 border-zinc-100 shadow'
-                                  : 'border-zinc-800 bg-zinc-955 text-zinc-400 hover:bg-zinc-900'
+                                  ? 'bg-zinc-100 text-zinc-950 border-zinc-100 shadow'
+                                  : 'border-zinc-800 bg-zinc-950 text-zinc-400 hover:bg-zinc-900'
                               )}
                             >
                               {p}
@@ -3131,7 +3053,7 @@ export function AdminDashboard() {
                               value={serviceSearch}
                               onChange={e => setServiceSearch(e.target.value)}
                               placeholder="Cari layanan/lembaga..."
-                              className="h-8 w-full rounded border border-zinc-800 bg-zinc-955 pl-8 pr-3 text-xs text-zinc-200 outline-none focus:border-zinc-700 sm:w-48 placeholder-zinc-500"
+                              className="h-8 w-full rounded border border-zinc-800 bg-zinc-950 pl-8 pr-3 text-xs text-zinc-200 outline-none focus:border-zinc-700 sm:w-48 placeholder-zinc-500"
                             />
                           </div>
                           <div className="flex items-center gap-1.5 text-xs text-zinc-400">
@@ -3139,7 +3061,7 @@ export function AdminDashboard() {
                             <select
                               value={serviceFilterCategory}
                               onChange={e => setServiceFilterCategory(e.target.value)}
-                              className="h-8 rounded border border-zinc-800 bg-zinc-955 px-2 text-zinc-300 outline-none focus:border-zinc-700"
+                              className="h-8 rounded border border-zinc-800 bg-zinc-950 px-2 text-zinc-300 outline-none focus:border-zinc-700"
                             >
                               <option value="all" className="bg-zinc-900 text-zinc-300">Semua Kategori</option>
                               {Object.entries(CATEGORY_LABELS).map(([k, v]) => (
@@ -3161,7 +3083,7 @@ export function AdminDashboard() {
                           <div className="overflow-x-auto">
                             <table className="w-full text-left text-xs border-collapse">
                               <thead>
-                                <tr className="border-b border-zinc-800 bg-zinc-955/50">
+                                <tr className="border-b border-zinc-800 bg-zinc-950/50">
                                   {[
                                     { key: 'id', width: 'w-[100px] min-w-[100px]', className: 'hidden xl:table-cell' },
                                     { key: 'name', width: 'w-[200px] min-w-[200px]', className: '' },
@@ -3222,7 +3144,7 @@ export function AdminDashboard() {
                                       <div className="flex items-center gap-1.5">
                                         <button
                                           onClick={() => setSelectedService(s)}
-                                          className="flex h-7 w-7 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-955 text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200 transition shadow-sm active:scale-95"
+                                          className="flex h-7 w-7 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-950 text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200 transition shadow-sm active:scale-95"
                                         >
                                           <Eye className="h-3.5 w-3.5" />
                                         </button>
@@ -3259,7 +3181,7 @@ export function AdminDashboard() {
                             value={ragDocSearch}
                             onChange={e => setRagDocSearch(e.target.value)}
                             placeholder="Cari nama berkas..."
-                            className="h-8 w-full rounded border border-zinc-800 bg-zinc-955 pl-8 pr-3 text-xs text-zinc-200 outline-none focus:border-zinc-700 sm:w-48 placeholder-zinc-500"
+                            className="h-8 w-full rounded border border-zinc-800 bg-zinc-950 pl-8 pr-3 text-xs text-zinc-200 outline-none focus:border-zinc-700 sm:w-48 placeholder-zinc-500"
                           />
                         </div>
                       </div>
@@ -3280,7 +3202,7 @@ export function AdminDashboard() {
                           <div className="overflow-x-auto">
                             <table className="w-full text-left text-xs border-collapse">
                               <thead>
-                                <tr className="border-b border-zinc-800 bg-zinc-955/50">
+                                <tr className="border-b border-zinc-800 bg-zinc-950/50">
                                   <th className="px-4 py-3 font-semibold text-zinc-400 uppercase tracking-wider text-[10px] whitespace-nowrap">ID Dokumen</th>
                                   <th className="px-4 py-3 font-semibold text-zinc-400 uppercase tracking-wider text-[10px] whitespace-nowrap">Nama Berkas</th>
                                   <th className="px-4 py-3 font-semibold text-zinc-400 uppercase tracking-wider text-[10px] whitespace-nowrap">Ukuran</th>
@@ -3369,7 +3291,7 @@ export function AdminDashboard() {
                       <div className="overflow-x-auto">
                         <table className="w-full text-left text-xs border-collapse">
                           <thead>
-                            <tr className="border-b border-zinc-800 bg-zinc-955/50">
+                            <tr className="border-b border-zinc-800 bg-zinc-950/50">
                               {[
                                 { key: 'id', width: 'w-[100px] min-w-[100px]', className: 'hidden xl:table-cell' },
                                 { key: 'claim_text', width: 'w-[220px] min-w-[220px]', className: '' },
@@ -3590,7 +3512,7 @@ export function AdminDashboard() {
                           <button
                             onClick={() => setSummariesPage(p => Math.max(1, p - 1))}
                             disabled={summariesPage === 1}
-                            className="flex h-7 w-7 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-905 bg-zinc-950 transition hover:bg-zinc-900 disabled:opacity-30"
+                            className="flex h-7 w-7 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900 bg-zinc-950 transition hover:bg-zinc-900 disabled:opacity-30"
                           >
                             <ChevronLeft className="h-3.5 w-3.5 text-zinc-400" />
                           </button>
@@ -3630,7 +3552,7 @@ export function AdminDashboard() {
                     <div className="flex items-center gap-2">
                       <MessageSquare className="h-4 w-4 text-zinc-400" />
                       <h2 className="text-xs font-bold text-zinc-100 uppercase tracking-wider">Tabel: chat_history</h2>
-                      <span className="rounded-full bg-zinc-955 border border-zinc-800 bg-zinc-900 px-2.5 py-0.5 text-[10px] text-zinc-400 font-semibold">
+                      <span className="rounded-full bg-zinc-950 border border-zinc-800 bg-zinc-900 px-2.5 py-0.5 text-[10px] text-zinc-400 font-semibold">
                         {historiesTotal} Baris
                       </span>
                     </div>
@@ -3640,7 +3562,7 @@ export function AdminDashboard() {
                         value={historiesSearch}
                         onChange={e => setHistoriesSearch(e.target.value)}
                         placeholder="Cari Sesi ID..."
-                        className="h-8 w-full rounded border border-zinc-800 bg-zinc-905 bg-zinc-950 pl-8 pr-3 text-xs text-zinc-200 outline-none focus:border-zinc-700 sm:w-48 placeholder-zinc-500"
+                        className="h-8 w-full rounded border border-zinc-800 bg-zinc-900 bg-zinc-950 pl-8 pr-3 text-xs text-zinc-200 outline-none focus:border-zinc-700 sm:w-48 placeholder-zinc-500"
                       />
                     </div>
                   </div>
@@ -3679,7 +3601,7 @@ export function AdminDashboard() {
                                   </div>
                                 </td>
                                 <td className="px-4 py-3.5 text-zinc-300 font-semibold text-[11px] min-w-[200px] whitespace-nowrap">
-                                  <span className="px-2.5 py-0.5 bg-zinc-955 bg-zinc-950 border border-zinc-800 rounded-lg text-zinc-300 whitespace-nowrap">
+                                  <span className="px-2.5 py-0.5 bg-zinc-950 bg-zinc-950 border border-zinc-800 rounded-lg text-zinc-300 whitespace-nowrap">
                                     {h.messages ? `${h.messages.length} Pesan` : '0 Pesan'}
                                   </span>
                                 </td>
@@ -3914,17 +3836,17 @@ export function AdminDashboard() {
                               <span className="text-[10px] text-zinc-500 font-medium">Halaman {chatPage} dari {totalChatPages} (12 per halaman)</span>
                               <div className="flex items-center gap-1">
                                 <button onClick={() => setChatPage(p => Math.max(1, p - 1))} disabled={chatPage === 1}
-                                  className="flex h-6.5 w-6.5 items-center justify-center rounded border border-zinc-800 bg-zinc-955 hover:bg-zinc-900 disabled:opacity-30 transition">
+                                  className="flex h-6.5 w-6.5 items-center justify-center rounded border border-zinc-800 bg-zinc-950 hover:bg-zinc-900 disabled:opacity-30 transition">
                                   <ChevronLeft className="h-3.5 w-3.5 text-zinc-400" />
                                 </button>
                                 {Array.from({ length: Math.min(totalChatPages, 5) }, (_, i) => i + 1).map(p => (
                                   <button key={p} onClick={() => setChatPage(p)}
                                     className={cn('flex h-6.5 w-6.5 items-center justify-center rounded text-xs font-semibold border transition',
-                                      chatPage === p ? 'bg-zinc-100 text-zinc-955 border-zinc-100' : 'border-zinc-800 bg-zinc-900 text-zinc-400 hover:bg-zinc-955'
+                                      chatPage === p ? 'bg-zinc-100 text-zinc-950 border-zinc-100' : 'border-zinc-800 bg-zinc-900 text-zinc-400 hover:bg-zinc-950'
                                     )}>{p}</button>
                                 ))}
                                 <button onClick={() => setChatPage(p => Math.min(totalChatPages, p + 1))} disabled={chatPage === totalChatPages}
-                                  className="flex h-6.5 w-6.5 items-center justify-center rounded border border-zinc-800 bg-zinc-955 hover:bg-zinc-900 disabled:opacity-30 transition">
+                                  className="flex h-6.5 w-6.5 items-center justify-center rounded border border-zinc-800 bg-zinc-950 hover:bg-zinc-900 disabled:opacity-30 transition">
                                   <ChevronRight className="h-3.5 w-3.5 text-zinc-400" />
                                 </button>
                               </div>

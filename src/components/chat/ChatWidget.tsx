@@ -19,7 +19,8 @@ interface ChatWidgetProps {
   className?: string
 }
 
-const API_BASE = `http://${typeof window !== 'undefined' ? window.location.hostname : 'localhost'}:3000`
+import { API_BASE_URL as API_BASE, getWsUrl } from '@/lib/apiConfig'
+
 
 export function ChatWidget({ reportId, className }: ChatWidgetProps) {
   const { user, token } = useAuthStore()
@@ -63,11 +64,10 @@ export function ChatWidget({ reportId, className }: ChatWidgetProps) {
       wsRef.current.close()
     }
 
-    const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws'
     const role = user?.role && ['superadmin', 'admin', 'petugas'].includes(user.role) ? 'petugas' : 'user'
     const name = user?.nama_lengkap || 'Warga'
     
-    const wsUrl = `${protocol}://${window.location.hostname}:3000/api/ws/chat?reportId=${reportId}&userId=${user?.id || 'citizen'}&role=${role}&name=${encodeURIComponent(name)}`
+    const wsUrl = getWsUrl(`/api/ws/chat?reportId=${reportId}&userId=${user?.id || 'citizen'}&role=${role}&name=${encodeURIComponent(name)}`)
     
     const ws = new WebSocket(wsUrl)
     wsRef.current = ws
