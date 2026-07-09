@@ -78,11 +78,18 @@ const bantuanLinks = [
 const kontakInfo = [
   { icon: Mail,   text: data.kontak.email,   href: `mailto:${data.kontak.email}` },
   { icon: Phone,  text: data.kontak.phone,   href: `tel:${data.kontak.phone}` },
-  { icon: MapPin, text: data.kontak.address, href: '#', isAddress: true },
+  { icon: MapPin, text: data.kontak.address, href: 'https://www.google.com/maps/place/Indonesia', isAddress: true },
 ]
 
 // ─── Rujukan Lembaga ─────────────────────────────────────────────────────────
-const rujukan = ['KPAI', 'Komnas HAM', 'PMI', 'Kominfo', 'Kemsos', 'BPS']
+const rujukanLinks = [
+  { name: 'KPAI', url: 'https://www.kpai.go.id' },
+  { name: 'Komnas HAM', url: 'https://www.komnasham.go.id' },
+  { name: 'PMI', url: 'https://www.pmi.or.id' },
+  { name: 'Kominfo', url: 'https://www.kominfo.go.id' },
+  { name: 'Kemsos', url: 'https://kemensos.go.id' },
+  { name: 'BPS', url: 'https://www.bps.go.id' }
+]
 
 // ─── Component ────────────────────────────────────────────────────────────────
 export default function Footer4Col() {
@@ -152,13 +159,16 @@ export default function Footer4Col() {
                 Data bersumber dari
               </p>
               <div className="flex flex-wrap gap-2">
-                {rujukan.map((name) => (
-                  <span
+                {rujukanLinks.map(({ name, url }) => (
+                  <a
                     key={name}
-                    className="text-[10px] text-zinc-600 border border-zinc-800/60 bg-zinc-900/20 px-2 py-0.5 rounded-md"
+                    href={url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[10px] text-zinc-500 hover:text-zinc-350 border border-zinc-800/60 hover:border-zinc-700 bg-zinc-900/20 hover:bg-zinc-800/30 px-2 py-0.5 rounded-md transition-all duration-200"
                   >
                     {name}
-                  </span>
+                  </a>
                 ))}
               </div>
             </div>

@@ -276,49 +276,42 @@ export function HomePage() {
     const video = heroVideoRef.current
     if (!video) return
 
-    let rAF: number
+    let intervalId: any
     let direction: 'forward' | 'backward' = 'forward'
-    let lastTime = performance.now()
 
-    const loop = (time: number) => {
-      const dt = (time - lastTime) / 1000
-      lastTime = time
-
-      if (direction === 'backward') {
-        if (video.currentTime - dt <= 0) {
+    const handleEnded = () => {
+      direction = 'backward'
+      video.pause()
+      
+      intervalId = setInterval(() => {
+        if (video.currentTime <= 0.1) {
+          clearInterval(intervalId)
           video.currentTime = 0
           direction = 'forward'
           video.play().catch(() => {})
         } else {
-          video.currentTime -= dt
-          rAF = requestAnimationFrame(loop)
+          // step backward by 0.05 seconds (20 fps equivalent)
+          video.currentTime = Math.max(0, video.currentTime - 0.05)
         }
-      } else {
-        rAF = requestAnimationFrame(loop)
-      }
+      }, 50)
     }
 
     const handlePlay = () => {
-      lastTime = performance.now()
-      rAF = requestAnimationFrame(loop)
+      if (direction === 'forward') {
+        clearInterval(intervalId)
+      }
     }
 
-    const handleEnded = () => {
-      direction = 'backward'
-      cancelAnimationFrame(rAF)
-      lastTime = performance.now()
-      rAF = requestAnimationFrame(loop)
-    }
-
-    video.addEventListener('play', handlePlay)
     video.addEventListener('ended', handleEnded)
+    video.addEventListener('play', handlePlay)
 
+    // auto start
     video.play().catch(() => {})
 
     return () => {
-      cancelAnimationFrame(rAF)
-      video.removeEventListener('play', handlePlay)
+      clearInterval(intervalId)
       video.removeEventListener('ended', handleEnded)
+      video.removeEventListener('play', handlePlay)
     }
   }, [])
 
@@ -558,51 +551,56 @@ export function HomePage() {
             src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260508_215831_c6a8989c-d716-4d8d-8745-e972a2eec711.mp4"
           />
 
-          {/* High-tech glassmorphism overlays */}
-          <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/40 to-[#040404] pointer-events-none" />
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,#040404_100%)] pointer-events-none" />
+          {/* Subtle gradient overlay for text readability & smooth transition into dark background */}
+          <div className="absolute inset-0 bg-gradient-to-t from-[#040404] via-black/35 to-transparent pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/55 via-transparent to-transparent pointer-events-none" />
 
-          {/* Hero content — Centered */}
-          <div className="relative z-10 flex flex-col items-center justify-center min-h-screen text-center px-6 sm:px-12">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 10 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-              className="max-w-3xl flex flex-col items-center"
-            >
-              {/* Badge */}
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-cyan-500/30 bg-cyan-950/20 backdrop-blur-md mb-6 shadow-[0_0_15px_rgba(6,182,212,0.15)]">
-                <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
-                <span className="text-[11px] font-mono font-semibold tracking-widest text-cyan-300 uppercase">
-                  Sistem Intelijen Publik
-                </span>
-              </div>
-
-              {/* Headline */}
-              <h1 className="text-[2.5rem] sm:text-[3.5rem] md:text-[4rem] leading-[1.05] font-bold text-white tracking-tighter mb-6 drop-shadow-2xl">
-                Akses Layanan <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-indigo-500">Transparan</span> & <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-500">Terverifikasi</span>
-              </h1>
-
-              {/* Subtext */}
-              <p className="text-[15px] md:text-[17px] text-zinc-300/90 font-light mb-10 max-w-xl mx-auto leading-relaxed drop-shadow-lg">
-                Validasi informasi faktual, lacak laporan warga, dan pahami ringkasan regulasi birokrasi pemerintahan dengan bantuan AI super cepat.
-              </p>
-
-              {/* CTA */}
-              <a
-                href="#"
-                onClick={(e) => {
-                  e.preventDefault()
-                  handleStartChat()
-                }}
-                className="group relative inline-flex items-center gap-3 px-8 py-4 rounded-xl font-bold text-[14px] text-white overflow-hidden shadow-[0_0_30px_rgba(6,182,212,0.2)] transition-all hover:scale-[1.02] active:scale-95"
+          {/* Hero content — bottom-left aligned */}
+          <div className="relative z-10 flex flex-col min-h-[92vh]">
+            <div className="flex-1 flex items-end pb-10 sm:pb-16 lg:pb-20 px-6 sm:px-12 md:px-20 lg:px-28">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+                className="max-w-xs"
               >
-                <div className="absolute inset-0 bg-gradient-to-r from-cyan-600 to-indigo-600 transition-transform duration-300 group-hover:scale-110" />
-                <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity" />
-                <span className="relative z-10 tracking-wide">Mulai Konsultasi AI</span>
-                <ArrowRight className="w-4 h-4 relative z-10 transition-transform duration-300 group-hover:translate-x-1" />
-              </a>
-            </motion.div>
+                {/* Badge */}
+                <a
+                  href="#tools-section"
+                  onClick={(e) => {
+                    e.preventDefault()
+                    document.getElementById('tools-section')?.scrollIntoView({ behavior: 'smooth' })
+                  }}
+                  className="inline-flex items-center gap-1.5 text-[11.5px] font-medium text-indigo-400 hover:text-indigo-300 transition-colors mb-3 group"
+                >
+                  Portal Informasi & Validasi Berita
+                  <span className="inline-block transition-transform duration-200 group-hover:translate-x-0.5">→</span>
+                </a>
+
+                {/* Headline */}
+                <h1 className="text-[1.5rem] sm:text-[1.75rem] leading-[1.15] font-medium text-white tracking-tight mb-3">
+                  Akses layanan publik yang mudah, transparan, dan terverifikasi.
+                </h1>
+
+                {/* Subtext */}
+                <p className="text-[13px] text-zinc-300 font-normal mb-3">
+                  Informasi faktual untuk warga Indonesia.
+                </p>
+
+                {/* CTA */}
+                <a
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault()
+                    handleStartChat()
+                  }}
+                  className="inline-flex items-center gap-2 text-[13px] font-medium text-indigo-400 border border-indigo-500/50 rounded-full px-5 py-2.5 hover:bg-indigo-650 hover:text-white hover:border-indigo-650 transition-all duration-200 backdrop-blur-sm bg-indigo-950/10 group"
+                >
+                  Mulai konsultasi AI
+                  <span className="transition-transform duration-200 group-hover:translate-x-0.5">→</span>
+                </a>
+              </motion.div>
+            </div>
           </div>
         </section>
 
