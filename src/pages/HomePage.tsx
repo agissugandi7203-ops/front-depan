@@ -269,13 +269,6 @@ export function HomePage() {
     }
   }, [isAuthenticated, user, checkMe])
 
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20)
-    }
-    window.addEventListener('scroll', handleScroll)
-    return () => window.removeEventListener('scroll', handleScroll)
-  }, [])
 
   const heroVideoRef = useRef<HTMLVideoElement>(null)
   
@@ -610,13 +603,6 @@ export function HomePage() {
                 <ArrowRight className="w-4 h-4 relative z-10 transition-transform duration-300 group-hover:translate-x-1" />
               </a>
             </motion.div>
-                  </button>
-                </motion.div>
-
-              </div>
-
-            </div>
->>>>>>> 43958cdb9d97588f7d0a8abd0fb55acea510475e
           </div>
         </section>
 
