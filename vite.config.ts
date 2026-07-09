@@ -121,11 +121,7 @@ export default defineConfig({
           return 'assets/[name]-[hash][extname]'
         },
       },
-      // Treeshaking: remove unused exports aggressively
-      treeshake: {
-        preset: 'recommended',
-        moduleSideEffects: false,
-      },
+
     },
   },
   // Optimize deps pre-bundling
