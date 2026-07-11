@@ -35,27 +35,37 @@ const stagger = {
 }
 
 // ─── Feature card data ────────────────────────────────────────────────────────
-const features = [
+const serviceBlocks = [
   {
+    type: 'image',
     icon: Bot,
-    title: 'Asisten AI 24/7',
-    description: 'Pendampingan layanan publik dan administrasi pemerintahan kapan saja, tanpa antre.',
+    title: 'Visualisasi Asisten AI',
   },
   {
+    type: 'text',
+    title: 'Asisten AI Birokrasi',
+    description: 'Pendampingan pelayanan publik dan penjelasan regulasi administratif kapan saja secara cepat, akurat, dan transparan.',
+  },
+  {
+    type: 'image',
     icon: Shield,
-    title: 'Verifikasi Berita',
-    description: 'Cek silang klaim dan pesan berantai menggunakan basis data rujukan resmi terpercaya.',
+    title: 'Visualisasi Cek Fakta',
   },
   {
+    type: 'text',
+    title: 'Klarifikasi & Cek Fakta',
+    description: 'Validasi kebenaran klaim berita, artikel, dan pesan berantai secara real-time terhadap sumber informasi resmi dan terpercaya.',
+  },
+  {
+    type: 'image',
     icon: FileText,
-    title: 'Ringkasan Dokumen',
-    description: 'Ubah teks birokrasi yang panjang menjadi instruksi konkret yang siap dieksekusi.',
+    title: 'Visualisasi Bagan Alir',
   },
   {
-    icon: Users,
-    title: 'Inklusif & Terbuka',
-    description: 'Dirancang untuk seluruh kalangan warga — tanpa hambatan teknis atau bahasa.',
-  },
+    type: 'text',
+    title: 'Penyederhanaan Dokumen',
+    description: 'Ubah dokumen regulasi administratif yang panjang dan rumit menjadi ringkasan konkret serta diagram alur visual interaktif.',
+  }
 ]
 
 
@@ -287,8 +297,8 @@ export function HomePage() {
         direction = 'forward'
         video.play().catch(() => {})
       } else {
-        // Step backward by 0.06s
-        video.currentTime = Math.max(0, video.currentTime - 0.06)
+        // Step backward by 0.18s (fast backward)
+        video.currentTime = Math.max(0, video.currentTime - 0.18)
       }
     }
 
@@ -620,49 +630,72 @@ export function HomePage() {
 
         {/* ── FEATURES ────────────────────────────────────────────────────── */}
         <section id="features-section" className="max-w-5xl mx-auto px-6 md:px-10 pt-28 pb-28">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16">
-            
-            {/* Left Sticky Column */}
-            <div className="lg:col-span-5 space-y-4 lg:sticky lg:top-24 h-fit">
-              <span className="text-[11px] font-mono font-semibold tracking-widest text-indigo-400 uppercase">
-                Sistem Intelijen Publik
-              </span>
-              <h2 className="text-[28px] sm:text-[32px] font-semibold text-zinc-150 tracking-tight leading-tight">
-                Layanan Cerdas Berorientasi Warga
-              </h2>
-              <p className="text-[13.5px] text-zinc-450 leading-relaxed font-light">
-                KOMUNITAS mengintegrasikan teknologi kecerdasan buatan untuk merampingkan alur birokrasi, menguji fakta berita secara real-time, dan mempercepat respons terhadap pengaduan warga.
-              </p>
-            </div>
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: '-60px' }}
+            transition={{ duration: 0.5 }}
+            className="mb-14 flex flex-col items-center text-center space-y-3 relative z-10"
+          >
+            <span className="text-[11px] font-mono font-semibold tracking-widest text-indigo-400 uppercase">
+              Sistem Intelijen Publik
+            </span>
+            <h2 className="text-[26px] md:text-[32px] font-semibold text-zinc-100 tracking-[-0.025em]">
+              Layanan Cerdas Berorientasi Warga
+            </h2>
+            <p className="text-[13.5px] text-zinc-450 font-normal max-w-xl leading-relaxed pt-1">
+              KOMUNITAS mengintegrasikan teknologi kecerdasan buatan untuk merampingkan alur birokrasi, menguji fakta berita secara real-time, dan mempercepat respons terhadap pengaduan warga.
+            </p>
+          </motion.div>
 
-            {/* Right Asymmetric Cards Column */}
-            <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-6">
-              {features.map((f, i) => {
-                const Icon = f.icon
-                const isLarge = i === 0 || i === 3
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-px bg-zinc-800 border border-zinc-800 overflow-hidden rounded-2xl">
+            {serviceBlocks.map((block, i) => {
+              if (block.type === 'image') {
+                const Icon = block.icon as any
                 return (
-                  <motion.div
+                  <div
                     key={i}
-                    initial={{ opacity: 0, y: 16 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true, margin: '-40px' }}
-                    transition={{ duration: 0.45, delay: i * 0.08 }}
-                    className={cn(
-                      "group relative rounded-2xl border border-zinc-800/80 bg-zinc-900/20 hover:bg-zinc-900/40 hover:border-zinc-700/60 p-6 flex flex-col justify-between transition-all duration-300 shadow-sm",
-                      isLarge ? "min-h-[220px]" : "min-h-[190px]"
-                    )}
+                    className="relative w-full aspect-square md:aspect-auto md:h-80 lg:h-96 bg-gradient-to-br from-zinc-900 to-zinc-950 flex items-center justify-center overflow-hidden group select-none cursor-pointer"
+                    onClick={handleStartChat}
                   >
-                    <div className="w-9 h-9 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center group-hover:border-indigo-500/30 group-hover:bg-indigo-950/15 transition-all duration-300">
-                      <Icon className="w-4 h-4 text-zinc-400 group-hover:text-indigo-400 transition-colors duration-300" />
+                    {/* Abstract background mesh */}
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(99,102,241,0.03)_0%,transparent_70%)] group-hover:opacity-100 transition-opacity duration-500" />
+                    
+                    {/* Animated geometric rings in background */}
+                    <div className="absolute w-44 h-44 rounded-full border border-zinc-800/40 flex items-center justify-center scale-90 group-hover:scale-100 group-hover:border-indigo-500/10 transition-all duration-700">
+                      <div className="w-32 h-32 rounded-full border border-dashed border-zinc-800/20 group-hover:border-indigo-500/5" />
                     </div>
-                    <div className="space-y-2 mt-6">
-                      <h3 className="text-[14px] font-medium text-zinc-100 tracking-[-0.01em]">{f.title}</h3>
-                      <p className="text-[12.5px] text-zinc-450 leading-relaxed font-light">{f.description}</p>
+
+                    {/* Central large outline icon */}
+                    <div className="relative transform scale-95 group-hover:scale-105 group-hover:rotate-1 transition-all duration-500 flex flex-col items-center gap-4">
+                      <div className="w-16 h-16 rounded-2xl bg-zinc-950 border border-zinc-855 flex items-center justify-center shadow-lg group-hover:border-indigo-500/20 group-hover:shadow-indigo-500/[0.02]">
+                        <Icon className="w-7 h-7 text-zinc-400 group-hover:text-indigo-400 transition-all duration-300" />
+                      </div>
+                      <span className="text-[11px] font-mono tracking-wider text-zinc-500 group-hover:text-zinc-400 uppercase transition-colors duration-300">
+                        {block.title}
+                      </span>
                     </div>
-                  </motion.div>
+                  </div>
                 )
-              })}
-            </div>
+              } else {
+                return (
+                  <div
+                    key={i}
+                    className="w-full aspect-square md:aspect-auto md:h-80 lg:h-96 bg-[#09090b] flex flex-col items-center justify-center text-center p-8 md:p-10 transition-all duration-300 hover:bg-[#121215] cursor-pointer group"
+                    onClick={handleStartChat}
+                  >
+                    <div className="space-y-3 max-w-xs transform group-hover:translate-y-[-2px] transition-transform duration-300">
+                      <h3 className="text-[16px] md:text-[17px] font-semibold text-zinc-150 tracking-tight group-hover:text-zinc-100 transition-colors">
+                        {block.title}
+                      </h3>
+                      <p className="text-[13px] text-zinc-450 leading-relaxed font-light">
+                        {block.description}
+                      </p>
+                    </div>
+                  </div>
+                )
+              }
+            })}
           </div>
         </section>
 

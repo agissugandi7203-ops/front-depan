@@ -277,7 +277,10 @@ export function ChatInterface() {
 
   useEffect(() => {
     if (shouldAutoScroll) {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+      const container = scrollContainerRef.current
+      if (container) {
+        container.scrollTop = container.scrollHeight
+      }
     }
   }, [displayedMessages, isLoading, shouldAutoScroll])
 
@@ -317,7 +320,7 @@ export function ChatInterface() {
   }
 
   return (
-    <div className="flex h-screen bg-zinc-950 text-zinc-100 overflow-hidden relative">
+    <div className="flex h-screen bg-zinc-950 text-zinc-100 overflow-hidden relative" data-lenis-prevent>
 
       {/* ── Desktop Sidebar ────────────────────────────────────────────────── */}
       <motion.div
