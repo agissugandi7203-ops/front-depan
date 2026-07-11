@@ -276,41 +276,52 @@ export function HomePage() {
     const video = heroVideoRef.current
     if (!video) return
 
-    let intervalId: any
     let direction: 'forward' | 'backward' = 'forward'
+    let timeoutId: any
+
+    const stepBackward = () => {
+      if (direction !== 'backward') return
+      if (video.currentTime <= 0.08) {
+        // Reset to start and play forward
+        video.currentTime = 0
+        direction = 'forward'
+        video.play().catch(() => {})
+      } else {
+        // Step backward by 0.06s
+        video.currentTime = Math.max(0, video.currentTime - 0.06)
+      }
+    }
+
+    const handleSeeked = () => {
+      if (direction === 'backward') {
+        // Wait 40ms to avoid overloading the decoder
+        timeoutId = setTimeout(stepBackward, 40)
+      }
+    }
 
     const handleEnded = () => {
       direction = 'backward'
       video.pause()
-      
-      intervalId = setInterval(() => {
-        if (video.currentTime <= 0.1) {
-          clearInterval(intervalId)
-          video.currentTime = 0
-          direction = 'forward'
-          video.play().catch(() => {})
-        } else {
-          // step backward by 0.05 seconds (20 fps equivalent)
-          video.currentTime = Math.max(0, video.currentTime - 0.05)
-        }
-      }, 50)
+      stepBackward()
     }
 
     const handlePlay = () => {
       if (direction === 'forward') {
-        clearInterval(intervalId)
+        clearTimeout(timeoutId)
       }
     }
 
     video.addEventListener('ended', handleEnded)
+    video.addEventListener('seeked', handleSeeked)
     video.addEventListener('play', handlePlay)
 
     // auto start
     video.play().catch(() => {})
 
     return () => {
-      clearInterval(intervalId)
+      clearTimeout(timeoutId)
       video.removeEventListener('ended', handleEnded)
+      video.removeEventListener('seeked', handleSeeked)
       video.removeEventListener('play', handlePlay)
     }
   }, [])
@@ -608,34 +619,51 @@ export function HomePage() {
         <div className="h-px bg-gradient-to-r from-transparent via-zinc-700 to-transparent" />
 
         {/* ── FEATURES ────────────────────────────────────────────────────── */}
-        <section id="features-section" className="max-w-5xl mx-auto px-6 md:px-10 pt-24 pb-28">
-          <motion.div
-            variants={stagger}
-            initial="hidden"
-            whileInView="show"
-            viewport={{ once: true, margin: '-80px' }}
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"
-          >
-            {features.map((f, i) => {
-              const Icon = f.icon
-              return (
-                <motion.div
-                  key={i}
-                  variants={fadeUp}
-                  transition={{ duration: 0.45 }}
-                  className="group relative rounded-2xl border border-zinc-800/80 bg-zinc-900/30 hover:bg-zinc-900/55 hover:border-zinc-700/60 p-6 flex flex-col gap-5 transition-all duration-300 shadow-sm"
-                >
-                  <div className="w-9 h-9 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center group-hover:border-indigo-500/30 group-hover:bg-indigo-950/15 transition-all duration-300">
-                    <Icon className="w-4 h-4 text-zinc-400 group-hover:text-indigo-400 transition-colors duration-300" />
-                  </div>
-                  <div className="space-y-2">
-                    <h3 className="text-[14px] font-medium text-zinc-150 tracking-[-0.01em]">{f.title}</h3>
-                    <p className="text-[12.5px] text-zinc-450 leading-relaxed font-light">{f.description}</p>
-                  </div>
-                </motion.div>
-              )
-            })}
-          </motion.div>
+        <section id="features-section" className="max-w-5xl mx-auto px-6 md:px-10 pt-28 pb-28">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16">
+            
+            {/* Left Sticky Column */}
+            <div className="lg:col-span-5 space-y-4 lg:sticky lg:top-24 h-fit">
+              <span className="text-[11px] font-mono font-semibold tracking-widest text-indigo-400 uppercase">
+                Sistem Intelijen Publik
+              </span>
+              <h2 className="text-[28px] sm:text-[32px] font-semibold text-zinc-150 tracking-tight leading-tight">
+                Layanan Cerdas Berorientasi Warga
+              </h2>
+              <p className="text-[13.5px] text-zinc-450 leading-relaxed font-light">
+                KOMUNITAS mengintegrasikan teknologi kecerdasan buatan untuk merampingkan alur birokrasi, menguji fakta berita secara real-time, dan mempercepat respons terhadap pengaduan warga.
+              </p>
+            </div>
+
+            {/* Right Asymmetric Cards Column */}
+            <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-6">
+              {features.map((f, i) => {
+                const Icon = f.icon
+                const isLarge = i === 0 || i === 3
+                return (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, y: 16 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, margin: '-40px' }}
+                    transition={{ duration: 0.45, delay: i * 0.08 }}
+                    className={cn(
+                      "group relative rounded-2xl border border-zinc-800/80 bg-zinc-900/20 hover:bg-zinc-900/40 hover:border-zinc-700/60 p-6 flex flex-col justify-between transition-all duration-300 shadow-sm",
+                      isLarge ? "min-h-[220px]" : "min-h-[190px]"
+                    )}
+                  >
+                    <div className="w-9 h-9 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center group-hover:border-indigo-500/30 group-hover:bg-indigo-950/15 transition-all duration-300">
+                      <Icon className="w-4 h-4 text-zinc-400 group-hover:text-indigo-400 transition-colors duration-300" />
+                    </div>
+                    <div className="space-y-2 mt-6">
+                      <h3 className="text-[14px] font-medium text-zinc-100 tracking-[-0.01em]">{f.title}</h3>
+                      <p className="text-[12.5px] text-zinc-450 leading-relaxed font-light">{f.description}</p>
+                    </div>
+                  </motion.div>
+                )
+              })}
+            </div>
+          </div>
         </section>
 
         {/* ── INTERACTIVE TOOLS ───────────────────────────────────────────── */}
@@ -644,22 +672,21 @@ export function HomePage() {
           className="max-w-5xl mx-auto px-6 md:px-10 pb-32 relative"
         >
           {/* Subtle background ambient glow for highlight */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[350px] bg-indigo-500/[0.015] rounded-full blur-[140px] pointer-events-none" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[350px] bg-indigo-500/[0.012] rounded-full blur-[140px] pointer-events-none" />
 
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 16 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: '-60px' }}
             transition={{ duration: 0.5 }}
-            className="mb-12 flex flex-col items-center text-center space-y-2 relative z-10"
+            className="mb-14 flex flex-col items-center text-center space-y-3 relative z-10"
           >
-            <span className="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-mono font-medium bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 uppercase tracking-widest mb-1.5">
-              Akses Mandiri
+            <span className="text-[11px] font-mono font-semibold tracking-widest text-indigo-450 uppercase">
+              Fitur Asisten Cepat
             </span>
-            <h2 className="text-[26px] md:text-[32px] font-semibold text-zinc-100 tracking-[-0.03em]">Alat Mandiri</h2>
-            <div className="h-0.5 w-10 bg-indigo-500/40 rounded-full my-1" />
-            <p className="text-[13.5px] text-zinc-400 font-normal max-w-md leading-relaxed pt-1">
-              Gunakan langsung tanpa perlu membuka percakapan — cukup tempel teks dan dapatkan hasilnya secara instan.
+            <h2 className="text-[26px] md:text-[32px] font-semibold text-zinc-100 tracking-[-0.025em]">Validasi & Analisis Instan</h2>
+            <p className="text-[13.5px] text-zinc-450 font-normal max-w-md leading-relaxed pt-1">
+              Dapatkan hasil analisis kredibilitas informasi dan ringkasan regulasi secara langsung tanpa perlu masuk ke ruang obrolan.
             </p>
           </motion.div>
 

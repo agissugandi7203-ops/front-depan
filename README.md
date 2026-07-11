@@ -1,95 +1,92 @@
-# 🇮🇩 KOMUNITAS — Portal Layanan Informasi Publik & Pelaporan Warga
+# Aplikasi Klien Frontend — KOMUNITAS
 
-> **Frontend Application Client**  
-> Asisten AI Cerdas untuk Validasi Berita (Cek Fakta), Peta Live Pelaporan Aduan, dan Ringkasan Regulasi Birokrasi Indonesia.
+Aplikasi antarmuka web warga dan dashboard administrasi pelayanan publik yang dibangun menggunakan teknologi modern berbasis React 18, TypeScript, dan Vite.
 
----
-
-## 🌟 Fitur Utama (Core Features)
-
-1. **🔍 AI Fact-Checker (Cek Hoaks)**
-   - Antarmuka interaktif untuk memvalidasi klaim berita secara real-time.
-   - Visualisasi persentase keyakinan (Confidence Score) berbasis AI dengan animasi halus (`framer-motion`).
-   - Pencantuman link referensi sumber berita terpercaya untuk mendukung transparansi data.
-
-2. **📋 RAG Document Summarizer (Ringkas Regulasi)**
-   - Fitur unggah berkas panduan birokrasi (PDF/Word/Excel) yang panjang dan membosankan.
-   - Ekstraksi AI menjadi ringkasan poin-poin penting, persyaratan dokumen wajib, dan kontak instansi terkait.
-   - **Bagan Alir Interaktif**: Kode Mermaid.js otomatis dirender menjadi diagram alir SVG birokrasi yang responsif.
-
-3. **🗺️ Live Map & Laporan Warga (SSE Real-time)**
-   - Halaman pelaporan warga dengan validasi NIK otomatis dan pelampiran koordinat GPS (peta interaktif Leaflet).
-   - Berlangganan ke Server-Sent Events (SSE) / WebSocket untuk menampilkan notifikasi toast instan saat status aduan diperbarui oleh petugas.
-   - Penyaringan regional berjenjang (*Cascading Dropdown*) dari Provinsi -> Kabupaten/Kota -> Kecamatan.
-
-4. **💼 Admin Portal (Direktori RAG & Management)**
-   - Dashboard analitik dengan statistik penggunaan AI yang interaktif.
-   - Pengelolaan direktori pengetahuan RAG (menambah, menghapus, atau mengunggah PDF panduan).
-   - Ekspor data laporan warga terfilter langsung ke format file CSV dengan encoding UTF-8 (BOM) agar terbaca rapi di Microsoft Excel.
-   - Manajemen akun staf petugas dan admin.
+Dokumen ini menjelaskan kendala pengembangan, solusi teknis yang diterapkan, serta panduan pemasangan klien web.
 
 ---
 
-## 🛠️ Teknologi & Libs (Tech Stack)
+## Tim Pengembang (SMK MARHAS Margahayu)
 
-- **Core**: React 18, TypeScript, Vite (Next-Gen Bundler)
-- **Styling**: TailwindCSS (Utility-First CSS), Vanilla CSS Variables
-- **Animations**: Framer Motion (Fluid transitions & Micro-animations)
-- **Icons**: Lucide React
-- **Diagrams**: Mermaid.js (SVG Flowchart Renderer)
-- **Maps**: Leaflet (OpenStreetMap integration)
-- **State/Routing**: React Router DOM, Zustand (Minimalist State Management)
+Aplikasi klien frontend ini dikembangkan dan dioptimalkan oleh:
+* **Fachri Angga Pratama** (Ketua Tim / Full Stack Developer)
+* **Alif Ikhwan Aulad Alhafidz** (Full Stack Creator)
+* **Fikri Awalludin Rahmat** (Administrasi Projek)
+
+Aplikasi live dapat diakses melalui: **[komunitasai.web.id](https://komunitasai.web.id)**
 
 ---
 
-## 🚀 Memulai (Local Development)
+## Rumusan Masalah dan Solusi Teknis
 
-### 1. Prasyarat
-Pastikan Anda telah menginstal **Node.js (v18+)** dan **npm** di komputer Anda.
+Dalam merancang dan mengoptimalkan antarmuka portal informasi publik nasional ini, tim pengembang berfokus mengatasi kendala teknis berikut:
 
-### 2. Klon Repositori & Install Dependencies
+### 1. Visualisasi Diagram Alir Prosedur Birokrasi
+* **Kendala**: Teks birokrasi pemerintah umumnya terlalu panjang dan membingungkan jika hanya ditampilkan dalam bentuk tulisan paragraf biasa.
+* **Solusi**: Kami membangun komponen khusus `<MermaidDiagram />` yang secara dinamis menerima sintaks diagram dari keluaran asisten AI dan merendernya ke dalam bentuk grafik alur kerja vektor (SVG) yang responsif langsung pada browser klien.
+
+### 2. Efisiensi Peta Interaktif Laporan Warga
+* **Kendala**: Merender peta interaktif dengan banyak data titik lokasi laporan secara real-time dapat membebani kinerja memori browser, terutama pada perangkat telepon seluler berspesifikasi rendah.
+* **Solusi**: Integrasi peta menggunakan Leaflet.js yang memanfaatkan rendering berbasis canvas dan penanganan koordinat dinamis. Kami menyematkan fitur geocoding otomatis di sisi klien untuk mengubah koordinat GPS secara instan menjadi nama wilayah administrasi resmi (Provinsi, Kota, Kecamatan) melalui OpenStreetMap Nominatim API.
+
+### 3. Sinkronisasi Status Sesi dan Data
+* **Kendala**: Kebutuhan pengelolaan state autentikasi, daftar obrolan aktif, kuota harian pengguna, dan notifikasi real-time yang cepat tanpa membebani ukuran bundel JS aplikasi.
+* **Solusi**: Kami menggunakan Zustand sebagai pengelola state global. Zustand sangat ringan dan efisien, sehingga mempercepat proses reaktivitas data antarmuka.
+
+### 4. Pengamanan Rute Halaman Administratif
+* **Kendala**: Mencegah akses tidak sah ke dashboard admin dan petugas pelayanan publik dari pengguna biasa.
+* **Solusi**: Rute diamankan melalui komponen pelindung `<ProtectedRoute />` dan `<AdminGuard />` yang menyaring klaim sesi autentikasi dan peran akun pengguna dari database Supabase sebelum memproses rendering halaman.
+
+---
+
+## Spesifikasi Teknologi
+* **Core Runtime**: Node.js & Vite (Next-generation build tool)
+* **Framework**: React 18 (TypeScript)
+* **Styling**: TailwindCSS & Framer Motion (untuk animasi transisi antarmuka)
+* **GIS Map**: Leaflet.js & React Leaflet
+* **State Manager**: Zustand
+* **Router**: React Router DOM (v6)
+
+---
+
+## Panduan Instalasi dan Pengembangan Lokal
+
+### Prasyarat
+Pastikan komputer Anda telah terpasang **Node.js (v18+)** dan **npm**.
+
+### Langkah 1: Instalasi Dependensi
+Jalankan perintah berikut di dalam direktori frontend:
 ```bash
-git clone https://github.com/agissugandi7203-ops/front-depan-.git
-cd front-depan-
 npm install
 ```
 
-### 3. Konfigurasi Variabel Lingkungan
-Buat berkas `.env` di root folder proyek dan sesuaikan nilainya:
+### Langkah 2: Konfigurasi File Lingkungan (.env)
+Buat berkas `.env` di dalam direktori `/frontend` dan sesuaikan parameternya:
 ```env
+# URL base API Backend
 VITE_API_BASE_URL=http://localhost:3000
-VITE_APP_NAME=KOMUNITAS
-VITE_APP_DESCRIPTION=Asisten AI untuk Warga Indonesia
 
-# Supabase Auth configuration (Samakan dengan Backend)
-VITE_SUPABASE_URL=https://your-supabase-project.supabase.co
-VITE_SUPABASE_ANON_KEY=your-anon-key-here
+# Kredensial Akses Supabase
+VITE_SUPABASE_URL=https://proyek-anda.supabase.co
+VITE_SUPABASE_ANON_KEY=kunci-anon-supabase-anda
 ```
 
-### 4. Jalankan Development Server
+### Langkah 3: Menjalankan Server Pengembangan
+Aktifkan server lokal menggunakan perintah:
 ```bash
 npm run dev
 ```
-Aplikasi akan berjalan di [http://localhost:5173](http://localhost:5173).
+Aplikasi web dapat diakses di browser melalui tautan `http://localhost:5173`.
+
+### Langkah 4: Kompilasi Rilis Produksi
+Untuk melakukan build dan kompresi berkas statis siap pakai untuk server web:
+```bash
+npm run build
+```
+Hasil kompilasi akan tersimpan di dalam folder `/dist`.
 
 ---
 
-## 🐋 Deploy ke Production (Google Cloud Run)
+## Lisensi
 
-Repositori ini telah dikonfigurasi dengan `Dockerfile` multi-stage dan `nginx.conf.template` untuk deploy otomatis menggunakan Google Cloud Run via GitHub Cloud Build.
-
-### Proses Build & Deploy
-Gunakan perintah berikut untuk build image Docker Anda (ganti variabel argumen dengan URL backend produksi Anda):
-
-```bash
-docker build \
-  --build-arg VITE_API_BASE_URL=https://your-backend-api-url.a.run.app \
-  --build-arg VITE_SUPABASE_URL=https://your-supabase-project.supabase.co \
-  --build-arg VITE_SUPABASE_ANON_KEY=your-anon-key-here \
-  -t gcr.io/your-gcp-project/komunitas-frontend:latest .
-```
-
-### Konfigurasi Nginx di Cloud Run
-Dockerfile menggunakan template server Nginx yang secara otomatis:
-1. Mendukung pemetaan port internal Nginx ke port dinamis `$PORT` yang diinjeksikan oleh Google Cloud Run menggunakan `envsubst`.
-2. Menyediakan rute fallback `try_files $uri $uri/ /index.html` untuk memastikan rute Single Page Application (SPA) tetap berjalan saat di-refresh.
+Proyek ini dirilis di bawah lisensi **MIT License**.

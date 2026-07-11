@@ -88,7 +88,10 @@ export function Navbar({ activeItem, onCtaClick }: NavbarProps) {
               alt="KOMUNITAS Logo"
               className="h-7 w-7 object-contain rounded-md transition-opacity group-hover:opacity-85"
             />
-            <span className="font-semibold text-[15px] tracking-[-0.02em] text-zinc-100">
+            <span className={cn(
+              "font-semibold text-[15px] tracking-[-0.02em] transition-colors duration-300",
+              isScrolled ? "text-zinc-100" : "text-zinc-950"
+            )}>
               KOMUNITAS
             </span>
           </div>
@@ -101,8 +104,8 @@ export function Navbar({ activeItem, onCtaClick }: NavbarProps) {
                 className={cn(
                   'text-[13px] transition-all duration-300 tracking-[-0.01em] cursor-pointer relative py-1.5',
                   activeItem === item.label
-                    ? 'text-zinc-100 font-semibold'
-                    : 'text-zinc-400 hover:text-zinc-100'
+                    ? (isScrolled ? 'text-zinc-100 font-semibold' : 'text-zinc-950 font-bold')
+                    : (isScrolled ? 'text-zinc-400 hover:text-zinc-100' : 'text-zinc-700 hover:text-zinc-950')
                 )}
                 onClick={() => handleNavClick(item)}
               >
@@ -110,7 +113,10 @@ export function Navbar({ activeItem, onCtaClick }: NavbarProps) {
                 {activeItem === item.label && (
                   <motion.span
                     layoutId="activeNavLine"
-                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#DEDBC8] rounded-full"
+                    className={cn(
+                      "absolute bottom-0 left-0 right-0 h-0.5 rounded-full",
+                      isScrolled ? "bg-[#DEDBC8]" : "bg-zinc-950"
+                    )}
                     transition={{ type: 'spring', stiffness: 380, damping: 30 }}
                   />
                 )}
@@ -123,21 +129,36 @@ export function Navbar({ activeItem, onCtaClick }: NavbarProps) {
             {isAuthenticated ? (
               <button
                 onClick={handleLogout}
-                className="h-8 px-4 text-[11px] font-bold rounded-full tracking-wide border bg-zinc-950 hover:bg-zinc-900 text-zinc-400 hover:text-rose-400 border-zinc-800 hover:border-rose-950/40 transition-all duration-300 active:scale-[0.97] cursor-pointer"
+                className={cn(
+                  "h-8 px-4 text-[11px] font-bold rounded-full tracking-wide border transition-all duration-300 active:scale-[0.97] cursor-pointer",
+                  isScrolled 
+                    ? "bg-zinc-950 hover:bg-zinc-900 text-zinc-400 hover:text-rose-400 border-zinc-800 hover:border-rose-950/40" 
+                    : "bg-white hover:bg-zinc-50 text-zinc-700 hover:text-rose-600 border-zinc-300 hover:border-rose-200"
+                )}
               >
                 Keluar
               </button>
             ) : (
               <button
                 onClick={() => openModal('login')}
-                className="h-8 px-4 text-[12px] font-medium rounded-full border border-zinc-800/80 hover:border-zinc-700 bg-transparent text-zinc-300 hover:text-white transition-all duration-300 active:scale-[0.97] cursor-pointer"
+                className={cn(
+                  "h-8 px-4 text-[12px] font-medium rounded-full border transition-all duration-300 active:scale-[0.97] cursor-pointer",
+                  isScrolled
+                    ? "border-zinc-800/80 hover:border-zinc-700 bg-transparent text-zinc-300 hover:text-white"
+                    : "border-zinc-300 hover:border-zinc-400 bg-transparent text-zinc-800 hover:text-zinc-950"
+                )}
               >
                 Masuk
               </button>
             )}
             <button
               onClick={handleCta}
-              className="h-8 px-4 text-[12px] font-medium rounded-full tracking-[-0.01em] transition-all duration-300 active:scale-[0.97] cursor-pointer bg-zinc-100 hover:bg-white text-zinc-950 shadow hover:shadow-md"
+              className={cn(
+                "h-8 px-4 text-[12px] font-medium rounded-full tracking-[-0.01em] transition-all duration-300 active:scale-[0.97] cursor-pointer shadow hover:shadow-md",
+                isScrolled
+                  ? "bg-zinc-100 hover:bg-white text-zinc-950"
+                  : "bg-zinc-950 hover:bg-black text-white"
+              )}
             >
               Mulai Percakapan
             </button>
@@ -148,7 +169,12 @@ export function Navbar({ activeItem, onCtaClick }: NavbarProps) {
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               aria-label={mobileMenuOpen ? 'Tutup menu' : 'Buka menu'}
-              className="p-2 text-zinc-400 hover:text-zinc-100 transition-colors cursor-pointer rounded-md hover:bg-zinc-800/50"
+              className={cn(
+                "p-2 transition-colors cursor-pointer rounded-md",
+                isScrolled 
+                  ? "text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/50" 
+                  : "text-zinc-700 hover:text-zinc-950 hover:bg-zinc-100/50"
+              )}
             >
               {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
