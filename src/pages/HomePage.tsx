@@ -593,7 +593,7 @@ export function HomePage() {
             muted
             className={cn(
               "absolute inset-0 w-full h-full object-cover scale-105 transition-opacity duration-300",
-              isPlayingForward ? "opacity-80 z-10" : "opacity-0 z-0"
+              isPlayingForward ? "opacity-80" : "opacity-0"
             )}
             src="/assets/video/hero_forward.mp4"
           />
@@ -604,14 +604,14 @@ export function HomePage() {
             muted
             className={cn(
               "absolute inset-0 w-full h-full object-cover scale-105 transition-opacity duration-300",
-              !isPlayingForward ? "opacity-80 z-10" : "opacity-0 z-0"
+              !isPlayingForward ? "opacity-80" : "opacity-0"
             )}
             src="/assets/video/hero_reverse.mp4"
           />
 
-          {/* Premium radial gradient focused at the bottom-left corner to match text placement, and thin bottom fade */}
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_0%_100%,#040404_0%,rgba(4,4,4,0.75)_25%,rgba(4,4,4,0.3)_50%,transparent_80%)] pointer-events-none z-20" />
-          <div className="absolute bottom-0 left-0 right-0 h-[60px] bg-gradient-to-t from-[#040404] to-transparent pointer-events-none z-20" />
+          {/* Subtle gradient overlay for text readability & smooth transition into dark background */}
+          <div className="absolute inset-0 bg-gradient-to-t from-[#040404] via-black/35 to-transparent pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/55 via-transparent to-transparent pointer-events-none" />
 
           {/* Hero content — bottom-left aligned */}
           <div className="relative z-10 flex flex-col min-h-[92vh]">
