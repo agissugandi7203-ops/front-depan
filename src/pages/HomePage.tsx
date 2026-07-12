@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback, lazy, Suspense } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion'
 import {
-  Bot, Shield, FileText, Users,
+  Bot, Shield, FileText, Users, MapPin,
   ArrowRight, Loader2, Sparkles,
   RefreshCw, CheckCircle2,
   AlertOctagon, HelpCircle,
@@ -17,6 +17,7 @@ import { useAuthStore } from '@/store/authStore'
 import { useAuthModalStore } from '@/store/authModalStore'
 import Footer4Col from '@/components/ui/footer-column'
 import { Navbar } from '@/components/Navbar'
+import { StickyScroll } from '@/components/ui/sticky-scroll-reveal'
 
 // MermaidDiagram lazy-loaded — Mermaid library is ~2MB, only load when needed
 const MermaidDiagram = lazy(() =>
@@ -40,33 +41,79 @@ const serviceBlocks = [
     type: 'image',
     icon: Bot,
     title: 'Visualisasi Asisten AI',
+    image: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80'
   },
   {
     type: 'text',
-    title: 'Asisten AI Birokrasi',
-    description: 'Pendampingan pelayanan publik dan penjelasan regulasi administratif kapan saja secara cepat, akurat, dan transparan.',
+    title: 'Asisten AI Pelayanan',
+    description: 'Pendampingan pelayanan publik berbasis AI untuk memandu warga dalam pengurusan administrasi, pemahaman regulasi, dan pencarian solusi publik secara cerdas.',
   },
   {
     type: 'image',
     icon: Shield,
     title: 'Visualisasi Cek Fakta',
+    image: 'https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&w=800&q=80'
   },
   {
     type: 'text',
     title: 'Klarifikasi & Cek Fakta',
-    description: 'Validasi kebenaran klaim berita, artikel, dan pesan berantai secara real-time terhadap sumber informasi resmi dan terpercaya.',
+    description: 'Verifikasi kebenaran informasi dan klarifikasi berita palsu (hoaks) secara real-time yang didukung oleh penelusuran referensi resmi.',
   },
   {
     type: 'image',
-    icon: FileText,
-    title: 'Visualisasi Bagan Alir',
+    icon: MapPin,
+    title: 'Visualisasi Aduan Spasial',
+    image: 'https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&w=800&q=80'
   },
   {
     type: 'text',
-    title: 'Penyederhanaan Dokumen',
-    description: 'Ubah dokumen regulasi administratif yang panjang dan rumit menjadi ringkasan konkret serta diagram alur visual interaktif.',
+    title: 'Aduan Spasial Real-Time',
+    description: 'Laporkan keluhan fasilitas umum secara geografis (geo-tagged). Terhubung langsung dengan petugas via obrolan real-time untuk penanganan yang transparan.',
   }
 ]
+
+// ─── Sticky scroll layout data ────────────────────────────────────────────────
+const stickyContent = [
+  {
+    title: "Asisten AI Pelayanan Publik",
+    description: "Pendampingan cerdas 24/7 untuk membantu Anda memahami prosedur birokrasi, menjelaskan regulasi administratif yang rumit, dan melengkapi persyaratan dokumen publik dengan bahasa yang sederhana.",
+    content: (
+      <div className="h-full w-full flex items-center justify-center text-white p-4">
+        <img 
+          src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80" 
+          alt="Asisten AI" 
+          className="h-full w-full object-cover rounded-xl"
+        />
+      </div>
+    ),
+  },
+  {
+    title: "Klarifikasi Hoaks & Verifikasi Berita",
+    description: "Uji kebenaran klaim berita, artikel, dan pesan berantai secara instan. Sistem kami menelusuri sumber referensi pemerintah dan portal berita terpercaya untuk menyaring informasi palsu secara transparan.",
+    content: (
+      <div className="h-full w-full flex items-center justify-center text-white p-4">
+        <img 
+          src="https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&w=800&q=80" 
+          alt="Cek Fakta" 
+          className="h-full w-full object-cover rounded-xl"
+        />
+      </div>
+    ),
+  },
+  {
+    title: "Pengaduan Fasilitas Spasial (Geo-tagged)",
+    description: "Laporkan masalah infrastruktur, jalan rusak, atau sampah menumpuk di lingkungan Anda secara langsung di atas peta interaktif. Laporan langsung terhubung dengan dinas terkait untuk penanganan cepat.",
+    content: (
+      <div className="h-full w-full flex items-center justify-center text-white p-4">
+        <img 
+          src="https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&w=800&q=80" 
+          alt="Aduan Spasial" 
+          className="h-full w-full object-cover rounded-xl"
+        />
+      </div>
+    ),
+  }
+];
 
 
 // ─── Inline markdown renderer for summary ─────────────────────────────────────
@@ -280,60 +327,42 @@ export function HomePage() {
   }, [isAuthenticated, user, checkMe])
 
 
-  const heroVideoRef = useRef<HTMLVideoElement>(null)
+  const videoForwardRef = useRef<HTMLVideoElement>(null)
+  const videoReverseRef = useRef<HTMLVideoElement>(null)
+  const [isPlayingForward, setIsPlayingForward] = useState(true)
   
   useEffect(() => {
-    const video = heroVideoRef.current
-    if (!video) return
+    const videoF = videoForwardRef.current
+    const videoR = videoReverseRef.current
+    if (!videoF || !videoR) return
 
-    let direction: 'forward' | 'backward' = 'forward'
-    let timeoutId: any
+    videoF.muted = true;
+    videoR.muted = true;
 
-    const stepBackward = () => {
-      if (direction !== 'backward') return
-      if (video.currentTime <= 0.08) {
-        // Reset to start and play forward
-        video.currentTime = 0
-        direction = 'forward'
-        video.play().catch(() => {})
-      } else {
-        // Step backward by 0.18s (fast backward)
-        video.currentTime = Math.max(0, video.currentTime - 0.18)
-      }
-    }
+    const handleForwardEnded = () => {
+      setIsPlayingForward(false);
+      videoR.currentTime = 0;
+      videoR.muted = true;
+      videoR.play().catch(() => {});
+    };
 
-    const handleSeeked = () => {
-      if (direction === 'backward') {
-        // Wait 40ms to avoid overloading the decoder
-        timeoutId = setTimeout(stepBackward, 40)
-      }
-    }
+    const handleReverseEnded = () => {
+      setIsPlayingForward(true);
+      videoF.currentTime = 0;
+      videoF.muted = true;
+      videoF.play().catch(() => {});
+    };
 
-    const handleEnded = () => {
-      direction = 'backward'
-      video.pause()
-      stepBackward()
-    }
-
-    const handlePlay = () => {
-      if (direction === 'forward') {
-        clearTimeout(timeoutId)
-      }
-    }
-
-    video.addEventListener('ended', handleEnded)
-    video.addEventListener('seeked', handleSeeked)
-    video.addEventListener('play', handlePlay)
+    videoF.addEventListener('ended', handleForwardEnded);
+    videoR.addEventListener('ended', handleReverseEnded);
 
     // auto start
-    video.play().catch(() => {})
+    videoF.play().catch(() => {});
 
     return () => {
-      clearTimeout(timeoutId)
-      video.removeEventListener('ended', handleEnded)
-      video.removeEventListener('seeked', handleSeeked)
-      video.removeEventListener('play', handlePlay)
-    }
+      videoF.removeEventListener('ended', handleForwardEnded);
+      videoR.removeEventListener('ended', handleReverseEnded);
+    };
   }, [])
 
   const handleStartChat = useCallback(() => {
@@ -563,13 +592,27 @@ export function HomePage() {
         {/* ── HERO — Fullscreen ping-pong video background, centered content ─── */}
         <section className="relative min-h-screen overflow-hidden bg-[#040404]">
 
-          {/* Background Video (Ping-Pong controlled via refs) */}
+          {/* Background Video A (Forward) */}
           <video
-            ref={heroVideoRef}
+            ref={videoForwardRef}
             playsInline
             muted
-            className="absolute inset-0 w-full h-full object-cover scale-105 opacity-80"
-            src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260508_215831_c6a8989c-d716-4d8d-8745-e972a2eec711.mp4"
+            className={cn(
+              "absolute inset-0 w-full h-full object-cover scale-105 transition-opacity duration-300",
+              isPlayingForward ? "opacity-80 z-10" : "opacity-0 z-0"
+            )}
+            src="/assets/video/hero_forward.mp4"
+          />
+          {/* Background Video B (Reverse) */}
+          <video
+            ref={videoReverseRef}
+            playsInline
+            muted
+            className={cn(
+              "absolute inset-0 w-full h-full object-cover scale-105 transition-opacity duration-300",
+              !isPlayingForward ? "opacity-80 z-10" : "opacity-0 z-0"
+            )}
+            src="/assets/video/hero_reverse.mp4"
           />
 
           {/* Subtle gradient overlay for text readability & smooth transition into dark background */}
@@ -644,58 +687,12 @@ export function HomePage() {
               Layanan Cerdas Berorientasi Warga
             </h2>
             <p className="text-[13.5px] text-zinc-450 font-normal max-w-xl leading-relaxed pt-1">
-              KOMUNITAS mengintegrasikan teknologi kecerdasan buatan untuk merampingkan alur birokrasi, menguji fakta berita secara real-time, dan mempercepat respons terhadap pengaduan warga.
+              KOMUNITAS mengintegrasikan teknologi kecerdasan buatan untuk merampingkan alur birokrasi, memverifikasi fakta informasi secara real-time, dan mempercepat respons terhadap pengaduan warga.
             </p>
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-px bg-zinc-800 border border-zinc-800 overflow-hidden rounded-2xl">
-            {serviceBlocks.map((block, i) => {
-              if (block.type === 'image') {
-                const Icon = block.icon as any
-                return (
-                  <div
-                    key={i}
-                    className="relative w-full aspect-square md:aspect-auto md:h-80 lg:h-96 bg-gradient-to-br from-zinc-900 to-zinc-950 flex items-center justify-center overflow-hidden group select-none cursor-pointer"
-                    onClick={handleStartChat}
-                  >
-                    {/* Abstract background mesh */}
-                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(99,102,241,0.03)_0%,transparent_70%)] group-hover:opacity-100 transition-opacity duration-500" />
-                    
-                    {/* Animated geometric rings in background */}
-                    <div className="absolute w-44 h-44 rounded-full border border-zinc-800/40 flex items-center justify-center scale-90 group-hover:scale-100 group-hover:border-indigo-500/10 transition-all duration-700">
-                      <div className="w-32 h-32 rounded-full border border-dashed border-zinc-800/20 group-hover:border-indigo-500/5" />
-                    </div>
-
-                    {/* Central large outline icon */}
-                    <div className="relative transform scale-95 group-hover:scale-105 group-hover:rotate-1 transition-all duration-500 flex flex-col items-center gap-4">
-                      <div className="w-16 h-16 rounded-2xl bg-zinc-950 border border-zinc-855 flex items-center justify-center shadow-lg group-hover:border-indigo-500/20 group-hover:shadow-indigo-500/[0.02]">
-                        <Icon className="w-7 h-7 text-zinc-400 group-hover:text-indigo-400 transition-all duration-300" />
-                      </div>
-                      <span className="text-[11px] font-mono tracking-wider text-zinc-500 group-hover:text-zinc-400 uppercase transition-colors duration-300">
-                        {block.title}
-                      </span>
-                    </div>
-                  </div>
-                )
-              } else {
-                return (
-                  <div
-                    key={i}
-                    className="w-full aspect-square md:aspect-auto md:h-80 lg:h-96 bg-[#09090b] flex flex-col items-center justify-center text-center p-8 md:p-10 transition-all duration-300 hover:bg-[#121215] cursor-pointer group"
-                    onClick={handleStartChat}
-                  >
-                    <div className="space-y-3 max-w-xs transform group-hover:translate-y-[-2px] transition-transform duration-300">
-                      <h3 className="text-[16px] md:text-[17px] font-semibold text-zinc-150 tracking-tight group-hover:text-zinc-100 transition-colors">
-                        {block.title}
-                      </h3>
-                      <p className="text-[13px] text-zinc-450 leading-relaxed font-light">
-                        {block.description}
-                      </p>
-                    </div>
-                  </div>
-                )
-              }
-            })}
+          <div className="relative z-10 w-full mt-6">
+            <StickyScroll content={stickyContent} />
           </div>
         </section>
 
@@ -739,9 +736,9 @@ export function HomePage() {
                   <Shield className="w-4 h-4 text-zinc-400" />
                 </div>
                 <div>
-                  <h3 className="text-[14px] font-semibold text-zinc-100 tracking-[-0.02em]">Verifikasi Klaim</h3>
+                  <h3 className="text-[14px] font-semibold text-zinc-100 tracking-[-0.02em]">Cek Kebenaran Berita (Anti-Hoaks)</h3>
                   <p className="text-[12px] text-zinc-500 mt-1 leading-relaxed">
-                    Tempel berita atau pesan yang meragukan untuk divalidasi berdasarkan data resmi.
+                    Tempel tulisan atau berita yang Anda ragukan untuk langsung dibuktikan kebenarannya lewat sumber resmi.
                   </p>
                 </div>
               </div>
@@ -937,9 +934,9 @@ export function HomePage() {
                   <FileText className="w-4 h-4 text-zinc-400" />
                 </div>
                 <div>
-                  <h3 className="text-[14px] font-semibold text-zinc-100 tracking-[-0.02em]">Ringkasan Dokumen</h3>
+                  <h3 className="text-[14px] font-semibold text-zinc-100 tracking-[-0.02em]">Penyederhana Dokumen & Aturan</h3>
                   <p className="text-[12px] text-zinc-500 mt-1 leading-relaxed">
-                    Tempel regulasi atau persyaratan administrasi untuk mendapat intisari yang mudah dipahami.
+                    Unggah atau tempel aturan birokrasi yang panjang untuk dijadikan poin-poin penjelasan singkat yang mudah dibaca.
                   </p>
                 </div>
               </div>

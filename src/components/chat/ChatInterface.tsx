@@ -258,7 +258,8 @@ export function ChatInterface() {
     ? wsMessages.map((m) => ({
         id: m.id || Math.random().toString(),
         role: (m.sender_type === 'user' ? 'user' : 'assistant') as 'user' | 'assistant',
-        content: `**${m.sender_name}**: ${m.message}`,
+        content: m.message,
+        senderName: m.sender_name,
         timestamp: m.created_at
       }))
     : messages

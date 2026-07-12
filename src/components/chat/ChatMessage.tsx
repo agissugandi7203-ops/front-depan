@@ -104,6 +104,14 @@ export const ChatMessage = memo(function ChatMessage({ message, isStreaming, sea
 
       {/* Message body — AI response fills full width like ChatGPT/Claude */}
       <div className={cn('flex flex-col gap-1.5 min-w-0', isUser ? 'items-end max-w-[78%]' : 'items-start w-full')}>
+        {message.senderName && (
+          <span className={cn(
+            "text-[10px] font-semibold select-none px-1.5",
+            isUser ? "text-zinc-550" : "text-indigo-400"
+          )}>
+            {message.senderName}
+          </span>
+        )}
 
         {/* Bubble */}
         <div className={cn(
