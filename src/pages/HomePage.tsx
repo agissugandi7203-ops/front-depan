@@ -609,9 +609,9 @@ export function HomePage() {
             src="/assets/video/hero_reverse.mp4"
           />
 
-          {/* Subtle gradient overlay for text readability & smooth transition into dark background */}
-          <div className="absolute inset-0 bg-gradient-to-t from-[#040404] via-black/35 to-transparent pointer-events-none" />
-          <div className="absolute inset-0 bg-gradient-to-r from-black/55 via-transparent to-transparent pointer-events-none" />
+          {/* Gradient overlays on bottom and left side of hero section */}
+          <div className="absolute inset-0 bg-gradient-to-t from-[#040404] via-[#040404]/50 to-transparent pointer-events-none z-20" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#040404] via-[#040404]/60 to-transparent pointer-events-none z-20" />
 
           {/* Hero content — bottom-left aligned */}
           <div className="relative z-10 flex flex-col min-h-[92vh]">
