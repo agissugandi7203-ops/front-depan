@@ -260,8 +260,8 @@ export function AboutPage() {
         </section>
 
         {/* MagicText Description Section */}
-        <section className="py-10 border-t border-b border-zinc-900/60 bg-zinc-950/10 rounded-3xl px-6 md:px-10 my-4 relative z-10">
-          <span className="text-[10px] font-mono tracking-widest text-[#DEDBC8] uppercase font-bold block mb-3">Mengenal KOMUNITAS</span>
+        <section className="py-5 border-t border-b border-zinc-900/60 bg-zinc-950/10 rounded-3xl px-6 md:px-10 -my-4 relative z-10">
+          <span className="text-[10px] font-mono tracking-widest text-[#DEDBC8] uppercase font-bold block mb-1">Mengenal KOMUNITAS</span>
           <MagicText
             text="Halo! KOMUNITAS adalah aplikasi ramah warga yang dibuat untuk membantu semua orang. Di sini, Anda bisa mengobrol dengan Asisten AI pintar untuk bertanya seputar aturan daerah, bantuan sosial, dan administrasi. Anda juga bisa langsung mengecek berita palsu agar tidak mudah tertipu, serta melaporkan jalan rusak, lampu padam, atau masalah fasilitas umum lainnya agar cepat diperbaiki oleh petugas secara transparan."
           />

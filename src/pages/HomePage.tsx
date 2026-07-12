@@ -78,39 +78,33 @@ const stickyContent = [
     title: "Asisten AI Pelayanan Publik",
     description: "Pendampingan cerdas 24/7 untuk membantu Anda memahami prosedur birokrasi, menjelaskan regulasi administratif yang rumit, dan melengkapi persyaratan dokumen publik dengan bahasa yang sederhana.",
     content: (
-      <div className="h-full w-full flex items-center justify-center text-white p-4">
-        <img 
-          src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80" 
-          alt="Asisten AI" 
-          className="h-full w-full object-cover rounded-xl"
-        />
-      </div>
+      <img 
+        src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80" 
+        alt="Asisten AI" 
+        className="h-full w-full object-cover"
+      />
     ),
   },
   {
     title: "Klarifikasi Hoaks & Verifikasi Berita",
     description: "Uji kebenaran klaim berita, artikel, dan pesan berantai secara instan. Sistem kami menelusuri sumber referensi pemerintah dan portal berita terpercaya untuk menyaring informasi palsu secara transparan.",
     content: (
-      <div className="h-full w-full flex items-center justify-center text-white p-4">
-        <img 
-          src="https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&w=800&q=80" 
-          alt="Cek Fakta" 
-          className="h-full w-full object-cover rounded-xl"
-        />
-      </div>
+      <img 
+        src="https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&w=800&q=80" 
+        alt="Cek Fakta" 
+        className="h-full w-full object-cover"
+      />
     ),
   },
   {
     title: "Pengaduan Fasilitas Spasial (Geo-tagged)",
     description: "Laporkan masalah infrastruktur, jalan rusak, atau sampah menumpuk di lingkungan Anda secara langsung di atas peta interaktif. Laporan langsung terhubung dengan dinas terkait untuk penanganan cepat.",
     content: (
-      <div className="h-full w-full flex items-center justify-center text-white p-4">
-        <img 
-          src="https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&w=800&q=80" 
-          alt="Aduan Spasial" 
-          className="h-full w-full object-cover rounded-xl"
-        />
-      </div>
+      <img 
+        src="https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&w=800&q=80" 
+        alt="Aduan Spasial" 
+        className="h-full w-full object-cover"
+      />
     ),
   }
 ];
@@ -672,24 +666,26 @@ export function HomePage() {
         <div className="h-px bg-gradient-to-r from-transparent via-zinc-700 to-transparent" />
 
         {/* ── FEATURES ────────────────────────────────────────────────────── */}
-        <section id="features-section" className="max-w-5xl mx-auto px-6 md:px-10 pt-28 pb-28">
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: '-60px' }}
-            transition={{ duration: 0.5 }}
-            className="mb-14 flex flex-col items-center text-center space-y-3 relative z-10"
-          >
-            <span className="text-[11px] font-mono font-semibold tracking-widest text-indigo-400 uppercase">
-              Sistem Intelijen Publik
-            </span>
-            <h2 className="text-[26px] md:text-[32px] font-semibold text-zinc-100 tracking-[-0.025em]">
-              Layanan Cerdas Berorientasi Warga
-            </h2>
-            <p className="text-[13.5px] text-zinc-450 font-normal max-w-xl leading-relaxed pt-1">
-              KOMUNITAS mengintegrasikan teknologi kecerdasan buatan untuk merampingkan alur birokrasi, memverifikasi fakta informasi secara real-time, dan mempercepat respons terhadap pengaduan warga.
-            </p>
-          </motion.div>
+        <section id="features-section" className="w-full pt-28 pb-0">
+          <div className="max-w-5xl mx-auto px-6 md:px-10">
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: '-60px' }}
+              transition={{ duration: 0.5 }}
+              className="mb-14 flex flex-col items-center text-center space-y-3 relative z-10"
+            >
+              <span className="text-[11px] font-mono font-semibold tracking-widest text-indigo-400 uppercase">
+                Sistem Intelijen Publik
+              </span>
+              <h2 className="text-[26px] md:text-[32px] font-semibold text-zinc-100 tracking-[-0.025em]">
+                Layanan Cerdas Berorientasi Warga
+              </h2>
+              <p className="text-[13.5px] text-zinc-450 font-normal max-w-xl leading-relaxed pt-1">
+                KOMUNITAS mengintegrasikan teknologi kecerdasan buatan untuk merampingkan alur birokrasi, memverifikasi fakta informasi secara real-time, dan mempercepat respons terhadap pengaduan warga.
+              </p>
+            </motion.div>
+          </div>
 
           <div className="relative z-10 w-full mt-6">
             <StickyScroll content={stickyContent} />
