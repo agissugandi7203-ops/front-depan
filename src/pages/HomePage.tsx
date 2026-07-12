@@ -78,36 +78,60 @@ const stickyContent = [
     title: "Asisten AI Pelayanan Publik",
     description: "Pendampingan cerdas 24/7 untuk membantu Anda memahami prosedur birokrasi, menjelaskan regulasi administratif yang rumit, dan melengkapi persyaratan dokumen publik dengan bahasa yang sederhana.",
     content: (
-      <img 
-        src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80" 
-        alt="Asisten AI" 
-        className="h-full w-full object-cover"
-      />
+      <div className="relative h-full w-full">
+        <img
+          src="https://i.pinimg.com/736x/fd/11/2b/fd112b2364a7e45cfc19951201516b15.jpg"
+          alt="Asisten AI"
+          className="h-full w-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/70 via-transparent to-indigo-950/20" />
+      </div>
     ),
   },
   {
     title: "Klarifikasi Hoaks & Verifikasi Berita",
     description: "Uji kebenaran klaim berita, artikel, dan pesan berantai secara instan. Sistem kami menelusuri sumber referensi pemerintah dan portal berita terpercaya untuk menyaring informasi palsu secara transparan.",
     content: (
-      <img 
-        src="https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&w=800&q=80" 
-        alt="Cek Fakta" 
-        className="h-full w-full object-cover"
-      />
+      <div className="relative h-full w-full">
+        <img
+          src="https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&w=900&q=85"
+          alt="Verifikasi Berita"
+          className="h-full w-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/70 via-transparent to-rose-950/20" />
+      </div>
     ),
   },
   {
-    title: "Pengaduan Fasilitas Spasial (Geo-tagged)",
-    description: "Laporkan masalah infrastruktur, jalan rusak, atau sampah menumpuk di lingkungan Anda secara langsung di atas peta interaktif. Laporan langsung terhubung dengan dinas terkait untuk penanganan cepat.",
+    title: "Ringkasan Dokumen Birokrasi",
+    description: "Ubah dokumen peraturan, syarat administrasi, dan naskah kebijakan yang panjang menjadi poin-poin instruksi konkret yang mudah dipahami dan siap dieksekusi oleh siapapun.",
     content: (
-      <img 
-        src="https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&w=800&q=80" 
-        alt="Aduan Spasial" 
-        className="h-full w-full object-cover"
-      />
+      <div className="relative h-full w-full">
+        <img
+          src="https://images.unsplash.com/photo-1568219557405-376e23e4f7cf?auto=format&fit=crop&w=900&q=85"
+          alt="Ringkasan Dokumen"
+          className="h-full w-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/70 via-transparent to-sky-950/20" />
+      </div>
     ),
-  }
-];
+  },
+  {
+    title: "Pengaduan Fasilitas Berbasis Lokasi",
+    description: "Laporkan masalah infrastruktur, jalan rusak, atau fasilitas umum yang terbengkalai secara geo-tagged langsung dari browser Anda. Laporan terhubung dengan petugas terkait untuk penanganan yang transparan.",
+    content: (
+      <div className="relative h-full w-full">
+        <img
+          src="https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&w=900&q=85"
+          alt="Pengaduan Spasial"
+          className="h-full w-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/70 via-transparent to-emerald-950/20" />
+      </div>
+    ),
+  },
+]
+
 
 
 // ─── Inline markdown renderer for summary ─────────────────────────────────────
@@ -289,6 +313,12 @@ const renderSummaryContent = (text: string) => {
 }
 
 export function HomePage() {
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    setIsMobile(window.matchMedia('(pointer: coarse)').matches)
+  }, [])
+
   const [claim, setClaim]           = useState('')
   const [docText, setDocText]       = useState('')
   const [claimLoading, setClaimLoading] = useState(false)
@@ -335,6 +365,7 @@ export function HomePage() {
 
     const handleForwardEnded = () => {
       setIsPlayingForward(false);
+      videoF.pause(); // Release decoder resources for forward video
       videoR.currentTime = 0;
       videoR.muted = true;
       videoR.play().catch(() => {});
@@ -342,6 +373,7 @@ export function HomePage() {
 
     const handleReverseEnded = () => {
       setIsPlayingForward(true);
+      videoR.pause(); // Release decoder resources for reverse video
       videoF.currentTime = 0;
       videoF.muted = true;
       videoF.play().catch(() => {});
@@ -356,6 +388,8 @@ export function HomePage() {
     return () => {
       videoF.removeEventListener('ended', handleForwardEnded);
       videoR.removeEventListener('ended', handleReverseEnded);
+      videoF.pause();
+      videoR.pause();
     };
   }, [])
 
@@ -570,7 +604,7 @@ export function HomePage() {
   const ctaY = useTransform(heroProgress, [0, 1], [0, -40])
 
   return (
-    <div className="min-h-screen bg-dot-pattern text-zinc-100 flex flex-col relative overflow-x-hidden">
+    <div className="min-h-screen bg-dot-pattern text-zinc-100 flex flex-col relative">
       {/* ── Ambient radial glow — does not distract ── */}
       <div className="pointer-events-none fixed inset-0 z-0">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[500px] bg-zinc-500/[0.02] rounded-full blur-[120px]" />
@@ -592,7 +626,7 @@ export function HomePage() {
             playsInline
             muted
             className={cn(
-              "absolute inset-0 w-full h-full object-cover scale-105 transition-opacity duration-300",
+              "absolute inset-0 w-full h-full object-cover scale-105 transition-opacity duration-300 transform-gpu will-change-opacity",
               isPlayingForward ? "opacity-80" : "opacity-0"
             )}
             src="/assets/video/hero_forward.mp4"
@@ -603,7 +637,7 @@ export function HomePage() {
             playsInline
             muted
             className={cn(
-              "absolute inset-0 w-full h-full object-cover scale-105 transition-opacity duration-300",
+              "absolute inset-0 w-full h-full object-cover scale-105 transition-opacity duration-300 transform-gpu will-change-opacity",
               !isPlayingForward ? "opacity-80" : "opacity-0"
             )}
             src="/assets/video/hero_reverse.mp4"
@@ -666,14 +700,15 @@ export function HomePage() {
         <div className="h-px bg-gradient-to-r from-transparent via-zinc-700 to-transparent" />
 
         {/* ── FEATURES ────────────────────────────────────────────────────── */}
-        <section id="features-section" className="w-full pt-28 pb-0">
-          <div className="max-w-5xl mx-auto px-6 md:px-10">
+        <section id="features-section" className="w-full">
+          {/* Section heading — constrained width */}
+          <div className="max-w-5xl mx-auto px-6 md:px-10 pt-28 pb-14">
             <motion.div
               initial={{ opacity: 0, y: 16 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: '-60px' }}
               transition={{ duration: 0.5 }}
-              className="mb-14 flex flex-col items-center text-center space-y-3 relative z-10"
+              className="flex flex-col items-center text-center space-y-3 relative z-10"
             >
               <span className="text-[11px] font-mono font-semibold tracking-widest text-indigo-400 uppercase">
                 Sistem Intelijen Publik
@@ -681,15 +716,14 @@ export function HomePage() {
               <h2 className="text-[26px] md:text-[32px] font-semibold text-zinc-100 tracking-[-0.025em]">
                 Layanan Cerdas Berorientasi Warga
               </h2>
-              <p className="text-[13.5px] text-zinc-450 font-normal max-w-xl leading-relaxed pt-1">
-                KOMUNITAS mengintegrasikan teknologi kecerdasan buatan untuk merampingkan alur birokrasi, memverifikasi fakta informasi secara real-time, dan mempercepat respons terhadap pengaduan warga.
+              <p className="text-[13.5px] text-zinc-500 font-normal max-w-xl leading-relaxed pt-1">
+                KOMUNITAS mengintegrasikan teknologi kecerdasan buatan untuk merampingkan alur birokrasi, memverifikasi fakta secara real-time, dan mempercepat respons pengaduan warga.
               </p>
             </motion.div>
           </div>
 
-          <div className="relative z-10 w-full mt-6">
-            <StickyScroll content={stickyContent} />
-          </div>
+          {/* StickyScroll — full-width, edge to edge */}
+          <StickyScroll content={stickyContent} />
         </section>
 
         {/* ── INTERACTIVE TOOLS ───────────────────────────────────────────── */}
