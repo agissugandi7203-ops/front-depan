@@ -1,0 +1,49 @@
+steps:
+  # 1. Build the container image using Dockerfile and production variables
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/frontdepan:$COMMIT_SHA'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/frontdepan:latest'
+      - '--build-arg'
+      - 'VITE_API_BASE_URL=https://backbelakang-12178843429.asia-southeast1.run.app'
+      - '--build-arg'
+      - 'VITE_SUPABASE_URL=https://qaenpoqkwixilczeqwyv.supabase.co'
+      - '--build-arg'
+      - 'VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhZW5wb3Frd2l4aWxjemVxd3l2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMzMTc3NzksImV4cCI6MjA5ODg5Mzc3OX0.o4ZfQSsA_6vpTbEvTh9mBgVXix2jbeaL6T5GCNeNnp4'
+      - '.'
+
+  # 2. Push the container image to Container Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - 'gcr.io/$PROJECT_ID/frontdepan:$COMMIT_SHA'
+
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - 'gcr.io/$PROJECT_ID/frontdepan:latest'
+
+  # 3. Deploy the container image to Cloud Run service
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: 'gcloud'
+    args:
+      - 'run'
+      - 'deploy'
+      - 'frontdepan'
+      - '--image'
+      - 'gcr.io/$PROJECT_ID/frontdepan:$COMMIT_SHA'
+      - '--region'
+      - 'asia-southeast1'
+      - '--platform'
+      - 'managed'
+      - '--allow-unauthenticated'
+
+images:
+  - 'gcr.io/$PROJECT_ID/frontdepan:$COMMIT_SHA'
+  - 'gcr.io/$PROJECT_ID/frontdepan:latest'
+
+options:
+  logging: CLOUD_LOGGING_ONLY
