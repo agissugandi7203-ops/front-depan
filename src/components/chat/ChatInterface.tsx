@@ -199,7 +199,7 @@ export function ChatInterface() {
     const container = scrollContainerRef.current
     if (!container) return
     
-    const threshold = 150
+    const threshold = 15
     const isAtBottom = container.scrollHeight - container.scrollTop - container.clientHeight <= threshold
     
     setShouldAutoScroll(isAtBottom)
@@ -258,7 +258,8 @@ export function ChatInterface() {
     ? wsMessages.map((m) => ({
         id: m.id || Math.random().toString(),
         role: (m.sender_type === 'user' ? 'user' : 'assistant') as 'user' | 'assistant',
-        content: `**${m.sender_name}**: ${m.message}`,
+        content: m.message,
+        senderName: m.sender_name,
         timestamp: m.created_at
       }))
     : messages
@@ -277,7 +278,12 @@ export function ChatInterface() {
 
   useEffect(() => {
     if (shouldAutoScroll) {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+      const container = scrollContainerRef.current
+      if (container) {
+        requestAnimationFrame(() => {
+          container.scrollTop = container.scrollHeight
+        })
+      }
     }
   }, [displayedMessages, isLoading, shouldAutoScroll])
 
@@ -294,6 +300,18 @@ export function ChatInterface() {
 
   // Main sending coordinator
   const handleSendMessage = async (text: string, image?: { base64: string; mimeType: string }) => {
+    // Force auto-scroll back on and perform a smooth scroll animation to the bottom when sending a message
+    setShouldAutoScroll(true)
+    setTimeout(() => {
+      const container = scrollContainerRef.current
+      if (container) {
+        container.scrollTo({
+          top: container.scrollHeight,
+          behavior: 'smooth'
+        })
+      }
+    }, 40)
+
     if (activeReportId) {
       if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
         const payload: any = {
@@ -317,7 +335,7 @@ export function ChatInterface() {
   }
 
   return (
-    <div className="flex h-screen bg-zinc-950 text-zinc-100 overflow-hidden relative">
+    <div className="flex fixed inset-0 h-[100dvh] w-full bg-zinc-950 text-zinc-100 overflow-hidden" data-lenis-prevent>
 
       {/* ── Desktop Sidebar ────────────────────────────────────────────────── */}
       <motion.div

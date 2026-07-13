@@ -76,6 +76,7 @@ export function AllReports() {
   const [cityDistrictMap, setCityDistrictMap] = useState<Record<string, string[]>>({})
 
   const { user } = useAuthStore()
+  const isAdmin = !!(user && ['admin', 'superadmin', 'petugas'].includes(user.role))
   const navigate = useNavigate()
   const { toast } = useToast()
 
@@ -791,8 +792,12 @@ export function AllReports() {
                     </div>
                     <div className="space-y-1">
                       <span className="text-[9px] font-bold uppercase tracking-wider text-zinc-500 font-mono block">Titik GPS</span>
-                      <span className="text-[10px] font-mono text-zinc-400 block truncate">
-                        {selectedReport.latitude?.toFixed(6)}, {selectedReport.longitude?.toFixed(6)}
+                      <span className="text-[10px] font-mono block truncate">
+                        {isAdmin ? (
+                          `${selectedReport.latitude?.toFixed(6)}, ${selectedReport.longitude?.toFixed(6)}`
+                        ) : (
+                          <span className="text-rose-450 font-medium">🔒 Terproteksi</span>
+                        )}
                       </span>
                     </div>
                   </div>
@@ -941,8 +946,12 @@ export function AllReports() {
                 </div>
                 <div className="space-y-1">
                   <span className="text-[9px] font-bold uppercase tracking-wider text-zinc-500 font-mono block">Titik GPS</span>
-                  <span className="text-[10px] font-mono text-zinc-400 block truncate">
-                    {selectedReport.latitude?.toFixed(6)}, {selectedReport.longitude?.toFixed(6)}
+                  <span className="text-[10px] font-mono block truncate">
+                    {isAdmin ? (
+                      `${selectedReport.latitude?.toFixed(6)}, ${selectedReport.longitude?.toFixed(6)}`
+                    ) : (
+                      <span className="text-rose-455 font-medium">🔒 Terproteksi</span>
+                    )}
                   </span>
                 </div>
               </div>
